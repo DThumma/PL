@@ -1,0 +1,13 @@
+eclipse.preferences.version=1
+org.scala-ide.sdt.core.diagnostic.currentPluginVersion=2.0.2.v-2_09-201207120929-81d0972
+org.scala-ide.sdt.core.preferences.Templates=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?><templates/>
+syntaxColouring.bracket.colour=255,253,253
+syntaxColouring.default.colour=226,186,186
+syntaxColouring.keyword.colour=140,83,121
+syntaxColouring.multiLineString.colour=104,75,255
+syntaxColouring.operator.colour=224,200,200
+syntaxColouring.return.colour=219,0,146
+syntaxColouring.string.colour=93,66,230
+syntaxColouring.xml.attributeName.colour=146,56,146
+syntaxColouring.xml.attributeValue.colour=113,85,253
+syntaxColouring.xml.equals.colour=229,208,208
