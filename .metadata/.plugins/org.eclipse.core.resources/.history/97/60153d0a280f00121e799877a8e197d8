@@ -151,12 +151,12 @@ object Lab3_pekl2737 {
       case Print(v1) if (isValue(v1)) => println(pretty(v1)); Undefined
       
       case Unary(Neg, N(v1)) => N(-v1) // Do Negative
-      case Unary(Not, B(v1)) => B(!v1) // Do Not
+      case Unary(Not, B(v1)) => B(!v1)
       
+      case Binary(Seq, N(e1), e2) => step(e2)
       case Binary(Plus, S(e1), S(e2)) => S(e1+e2)
       case Binary(Plus, S(e1), e2) => S(e1 + toString(e2))
-      case Binary(Plus, N(e1), N(e2)) => N(e1 + e2) //Do Plus Number
-      case Binary(Seq, N(e1), e2) => step(e2)
+      case Binary(Plus, N(e1), N(e2)) => N(e1 + e2) //Do Plus
 //      case Binary(Plus, N(e1), e2) => step(e2)
       
       

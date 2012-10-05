@@ -2380,3 +2380,39 @@ Java Model Exception: Java Model Status [HW2 does not exist]
 	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:54)
 !SUBENTRY 1 org.eclipse.jdt.core 4 969 2012-10-05 10:35:40.618
 !MESSAGE HW2 does not exist
+!SESSION 2012-10-05 13:06:34.384 -----------------------------------------------
+eclipse.buildId=I20110613-1736
+java.version=1.6.0_24
+java.vendor=Sun Microsystems Inc.
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY org.eclipse.core.resources 2 10035 2012-10-05 13:06:39.936
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.scala-ide.sdt.core 4 4 2012-10-05 13:06:47.321
+!MESSAGE class org.eclipse.jdt.core.JavaModelException:HW2 does not exist
+!STACK 1
+Java Model Exception: Java Model Status [HW2 does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newNotPresentException(JavaElement.java:495)
+	at org.eclipse.jdt.internal.core.JavaModelManager.getPerProjectInfoCheckExistence(JavaModelManager.java:2283)
+	at org.eclipse.jdt.internal.core.JavaProject.getPerProjectInfo(JavaProject.java:1905)
+	at org.eclipse.jdt.internal.core.JavaProject.getResolvedClasspath(JavaProject.java:1979)
+	at scala.tools.eclipse.ScalaProject.sourceOutputFolders(ScalaProject.scala:282)
+	at scala.tools.eclipse.ScalaProject.initialize(ScalaProject.scala:566)
+	at scala.tools.eclipse.ScalaProject$$anon$2.create(ScalaProject.scala:75)
+	at scala.tools.eclipse.ScalaProject$$anon$2.create(ScalaProject.scala:70)
+	at scala.tools.eclipse.util.Cached$class.liftedTree1$1(Cached.scala:30)
+	at scala.tools.eclipse.util.Cached$class.apply(Cached.scala:29)
+	at scala.tools.eclipse.ScalaProject$$anon$2.apply(ScalaProject.scala:70)
+	at scala.tools.eclipse.ScalaProject.withPresentationCompiler(ScalaProject.scala:659)
+	at scala.tools.eclipse.ScalaProject.withSourceFile(ScalaProject.scala:668)
+	at scala.tools.eclipse.javaelements.ScalaCompilationUnit$class.withSourceFile(ScalaCompilationUnit.scala:51)
+	at scala.tools.eclipse.javaelements.ScalaSourceFile.withSourceFile(ScalaSourceFile.scala:37)
+	at scala.tools.eclipse.markoccurrences.ScalaOccurrencesFinder.findOccurrences(ScalaOccurrencesFinder.scala:36)
+	at scala.tools.eclipse.ScalaSourceFileEditor.getAnnotations(ScalaSourceFileEditor.scala:142)
+	at scala.tools.eclipse.ScalaSourceFileEditor.scala$tools$eclipse$ScalaSourceFileEditor$$performOccurrencesUpdate(ScalaSourceFileEditor.scala:123)
+	at scala.tools.eclipse.ScalaSourceFileEditor$$anon$2.run(ScalaSourceFileEditor.scala:161)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:54)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2012-10-05 13:06:47.321
+!MESSAGE HW2 does not exist

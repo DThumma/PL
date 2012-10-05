@@ -156,7 +156,6 @@ object Lab3_pekl2737 {
       case Binary(Plus, S(e1), S(e2)) => S(e1+e2)
       case Binary(Plus, S(e1), e2) => S(e1 + toString(e2))
       case Binary(Plus, N(e1), N(e2)) => N(e1 + e2) //Do Plus Number
-      case Binary(Seq, N(e1), e2) => step(e2)
 //      case Binary(Plus, N(e1), e2) => step(e2)
       
       
