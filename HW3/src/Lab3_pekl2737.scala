@@ -30,7 +30,8 @@ object Lab3_pekl2737 {
    * 'throws new UnsupportedOperationException' as needed to get something
    * that compiles without error.
    */
-  
+  case class customException(smth:String)  extends Exception
+
   type Env = Map[String, Expr]
   val emp: Env = Map()
   def get(env: Env, x: String): Expr = env(x)
@@ -153,15 +154,18 @@ object Lab3_pekl2737 {
       case Unary(Neg, N(v1)) => N(-v1) // Do Negative
       case Unary(Not, B(v1)) => B(!v1) // Do Not
       
-      case Binary(Plus, e1, e2) => (e1, e2) match {
+      case Binary(Plus, e1, e2) if(isValue(e1) && isValue(e2)) => (e1, e2) match {
         case (S(e1), _) => S(e1+toString(e2))
         case (_, S(e2)) => S(toString(e1) + e2)
         case (N(e1), N(e2)) => N(e1 + e2)
         case _ => throw new UnsupportedOperationException
       }
-      case Binary(Seq, N(e1), e2) => step(e2)
-      case Binary(op, e1, e2) if(isValue(e1) && isValue(e2)) => 
-        op match {
+      case Binary(And,v1, e2)  if(isValue(v1) && (v1 == B(true))) => e2
+      case Binary(And,v1, e2)  if(isValue(v1) && (v1 == B(false)))=> B(false)
+      case Binary(Or, B(false), e2)  if(isValue(e2))           => e2
+      case Binary(Or, B(true), e2)   if(isValue(e2))           => B(true)
+      
+      case Binary(op, e1, e2) if(isValue(e1) && isValue(e2)) => op match {
         /*     doArith        */
         case Minus => N(toNumber(e1) - toNumber(e2))
         case Times => N(toNumber(e1) * toNumber(e2))
@@ -173,14 +177,23 @@ object Lab3_pekl2737 {
         case Ge    => B(toNumber(e1) >= toNumber(e2))
         case Gt    => B(toNumber(e1) >  toNumber(e2))
         case Le    => B(toNumber(e1) <= toNumber(e2))
-        case lt    => B(toNumber(e1) <  toNumber(e2))
+        case lt    => B(toNumber(e1) <  toNumber(e2))        
       }
       
+      case Binary(Seq, N(e1), e2) if(isValue(e2))              => step(e2)
+
       
       case ConstDecl(x, v1, e2) => substitute(e2, v1, x) // substitute v1 for x into e2
       
       /* Inductive Cases: Search Rules */
       case Print(e1) => Print(step(e1))
+      case Binary(op, v1, e2) if(isValue(v1)) => (op, v1, e2) match {
+        case (Eq, v1, Function(_,_,_)) => throw new customException("Dynamic Typing Error")
+        case (Eq, Function(_,_,_), e2) => throw new customException("Dynamic Typing Error")
+        case (Ne, v1, Function(_,_,_)) => throw new customException("Dynamic Typing Error")
+        case (Ne, Function(_,_,_), e2) => throw new customException("Dynamic Typing Error")
+        case (_,_,_) => Binary(op, v1, step(e2))
+      }
       
       
       case _ => throw new UnsupportedOperationException
