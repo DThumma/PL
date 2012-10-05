@@ -154,8 +154,10 @@ object Lab3_pekl2737 {
       case Unary(Not, B(v1)) => B(!v1) // Do Not
       
       case Binary(Plus, S(e1), S(e2)) => S(e1+e2)
-      case Binary(Plus, S(e1), e2) => S(e1 + toString(e2))
+      case Binary(Plus, S(e1), e2) => S(e1 + toString(step(e2)))
+//      case Binary(Plus, e1, S(e2)) => S(toString(e1) + e1)
       case Binary(Plus, N(e1), N(e2)) => N(e1 + e2) //Do Plus Number
+//      case Binary(Plus, N(e1), e2) => N(e1+toNumber(step(e2)))
       case Binary(Seq, N(e1), e2) => step(e2)
 //      case Binary(Plus, N(e1), e2) => step(e2)
       
