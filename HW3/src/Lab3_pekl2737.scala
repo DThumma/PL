@@ -160,10 +160,10 @@ object Lab3_pekl2737 {
         case (N(e1), N(e2)) => N(e1 + e2)
         case _ => throw new UnsupportedOperationException
       }
-      case Binary(And,v1, e2)  if(isValue(v1) && (v1 == B(true))) => e2
-      case Binary(And,v1, e2)  if(isValue(v1) && (v1 == B(false)))=> B(false)
-      case Binary(Or, B(false), e2)  if(isValue(e2))           => e2
-      case Binary(Or, B(true), e2)   if(isValue(e2))           => B(true)
+      case Binary(And,v1, e2)   if(isValue(v1) && (v1 == B(true))) => e2
+      case Binary(And,v1, e2)   if(isValue(v1) && (v1 == B(false)))=> B(false)
+      case Binary(Or, v1, e2)   if(isValue(e2) && (v1 == B(false)))=> e2
+      case Binary(Or, v1, e2)   if(isValue(e2) && (v1 == B(true))) => B(true)
       
       case Binary(op, e1, e2) if(isValue(e1) && isValue(e2)) => op match {
         /*     doArith        */
