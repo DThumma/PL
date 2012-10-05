@@ -160,14 +160,16 @@ object Lab3_pekl2737 {
         case _ => throw new UnsupportedOperationException
       }
       case Binary(Seq, N(e1), e2) => step(e2)
-      case Binary(op, e1, e2) => op match {
+      case Binary(op, e1, e2) if(isValue(e1) && isValue(e2)) => 
+        op match {
         /*     doArith        */
         case Minus => N(toNumber(e1) - toNumber(e2))
         case Times => N(toNumber(e1) * toNumber(e2))
         case Div   => N(toNumber(e1) / toNumber(e2))
-        /*    DoInequality    */
+        /*    DoEquality      */
         case Eq    => B(toNumber(e1) == toNumber(e2))
         case Ne    => B(toNumber(e1) != toNumber(e2))
+        /*    DoInequality    */
         case Ge    => B(toNumber(e1) >= toNumber(e2))
         case Gt    => B(toNumber(e1) >  toNumber(e2))
         case Le    => B(toNumber(e1) <= toNumber(e2))
