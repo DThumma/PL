@@ -195,6 +195,7 @@ object Lab3_pekl2737 {
         case (_,_,_) => Binary(op, v1, step(e2))
       }
       case Binary(op, e1, e2) => Binary(op, step(e1), e2)
+      case Unary(op, e1) if(!isValue(e1)) => step(e1)
    
       case _ => throw new UnsupportedOperationException
     }
