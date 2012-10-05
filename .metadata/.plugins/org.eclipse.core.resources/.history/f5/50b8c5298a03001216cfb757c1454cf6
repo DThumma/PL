@@ -1,3 +1,0 @@
-const x = 4;
-const y = x < 0 ? undefined : x;
-y + 1

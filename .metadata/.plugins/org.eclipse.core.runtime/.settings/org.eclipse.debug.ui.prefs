@@ -1,7 +1,0 @@
-Console.highWaterMark=88000
-StringVariablePreferencePage=244,204,203,164,
-eclipse.preferences.version=1
-org.eclipse.debug.ui.PREF_LAUNCH_PERSPECTIVES=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<launchPerspectives/>\n
-org.eclipse.debug.ui.consoleBackground=52,42,42
-org.eclipse.debug.ui.manage_view_perspectives=org.eclipse.debug.ui.DebugPerspective,org.scala-ide.sdt.core.perspective,
-preferredTargets=default\:default|
