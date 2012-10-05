@@ -1,1 +1,4 @@
-true || true
+jsy.print(1+3);
+jsy.print('a'+3);
+jsy.print(3+'a')
+jsy.print('------------------------------------------------')

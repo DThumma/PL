@@ -164,6 +164,9 @@ object Lab3_pekl2737 {
       case Binary(And,v1, e2)   if(isValue(v1) && (v1 == B(false)))=> B(false)
       case Binary(Or, v1, e2)   if(isValue(e2) && (v1 == B(false)))=> e2
       case Binary(Or, v1, e2)   if(isValue(e2) && (v1 == B(true))) => B(true)
+      case Binary(Seq,e1, e2)   if(isValue(e1)) => {
+        e2
+      }
       
       case Binary(op, e1, e2) if(isValue(e1) && isValue(e2)) => op match {
         /*     doArith        */
@@ -180,9 +183,6 @@ object Lab3_pekl2737 {
         case lt    => B(toNumber(e1) <  toNumber(e2))        
       }
       
-      case Binary(Seq, N(e1), e2) if(isValue(e2))              => step(e2)
-
-      
       case ConstDecl(x, v1, e2) => substitute(e2, v1, x) // substitute v1 for x into e2
       
       /* Inductive Cases: Search Rules */
@@ -194,8 +194,8 @@ object Lab3_pekl2737 {
         case (Ne, Function(_,_,_), e2) => throw new customException("Dynamic Typing Error")
         case (_,_,_) => Binary(op, v1, step(e2))
       }
-      
-      
+      case Binary(op, e1, e2) => Binary(op, step(e1), e2)
+   
       case _ => throw new UnsupportedOperationException
     }
   }
