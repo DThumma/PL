@@ -153,14 +153,19 @@ object Lab3_pekl2737 {
       case Unary(Neg, N(v1)) => N(-v1) // Do Negative
       case Unary(Not, B(v1)) => B(!v1) // Do Not
       
-      case Binary(Plus, e1, e2) => (e1, e2) match{
+      case Binary(Plus, e1, e2) => (e1, e2) match {
         case (S(e1), _) => S(e1+toString(e2))
         case (_, S(e2)) => S(toString(e1) + e2)
         case (N(e1), N(e2)) => N(e1 + e2)
         case _ => throw new UnsupportedOperationException
       }
-      
       case Binary(Seq, N(e1), e2) => step(e2)
+      case Binary(op, e1, e2) => op match {
+        case Minus => N(toNumber(e1) - toNumber(e2))
+        case Times => N(toNumber(e1) * toNumber(e2))
+        case Div   => N(toNumber(e1) / toNumber(e2))
+        case _ => throw new UnsupportedOperationException
+      }
       
       
       case ConstDecl(x, v1, e2) => substitute(e2, v1, x) // substitute v1 for x into e2
