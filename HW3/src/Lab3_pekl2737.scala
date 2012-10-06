@@ -141,6 +141,7 @@ object Lab3_pekl2737 {
       case Print(e1) => Print(subst(e1))
       case Unary(uop, e1) => Unary(uop, substitute(e1, v, x))
       case Binary(op, e1, e2) => Binary(op, substitute(e1, v, x), substitute(e2, v, x)) 
+      case ConstDecl(name, v1, env) => ConstDecl(name, substitute(env, v, x), env)
       case Var(name) => v
       case _ => throw new UnsupportedOperationException
     }
@@ -184,9 +185,17 @@ object Lab3_pekl2737 {
       
       case If(e1, e2, e3) if(isValue(e1) && e1==B(true)) => e2
       case If(e1, e2, e3) if(isValue(e1) && e1==B(false)) => e3
+      case ConstDecl(x, v1, e2) if(isValue(v1)) => substitute(e2, v1, x) // substitute v1 for x into e2
+      case Call(e1, e2) if(isValue(e1) && isValue(e2)) => e1 match {
+        case Function(None, x, ebody) => substitute(ebody, e2, x)
+        case Function(Some(fun), x, ebody) => {
+          var v3 = Function(Some(fun), x, substitute(ebody, e2, x))
+          substitute(ebody, v3, fun)
+        }
+        case _ => throw new customException("This is a hack")
+            
+      }
 
-      case ConstDecl(x,v1, e2) if(!isValue(v1)) => ConstDecl(x, step(v1), e2)      
-      case ConstDecl(x, v1, e2) => substitute(e2, v1, x) // substitute v1 for x into e2
       /* Inductive Cases: Search Rules */
       
       case Print(e1) => Print(step(e1))
@@ -200,6 +209,9 @@ object Lab3_pekl2737 {
       case Binary(op, e1, e2) => Binary(op, step(e1), e2)
       case Unary(op, e1) if(!isValue(e1)) => Unary(op, step(e1))
       case If(e1, e2, e3) if(!isValue(e1)) => If(step(e1), e2, e3)
+      case ConstDecl(x,v1, e2) if(!isValue(v1)) => ConstDecl(x, step(v1), e2)
+      case Call(e1, e2) if(isValue(e1) && !isValue(e2)) => Call(e1, step(e2))
+      case Call(e1, e2) if(!isValue(e1)) => Call(step(e1), e2)
    
       case _ => throw new UnsupportedOperationException
     }
