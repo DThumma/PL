@@ -6,7 +6,11 @@ object Lab3_pekl2737 {
    * Peter Klipfel
    * 
    * Partner: Henry Broddle
-   * Collaborators: <Any Collaborators>
+   * Collaborators: Dana Hughes, 
+   * 				Waverly Hinton, 
+   * 				John Shaw, 
+   * 				Andrew Fischer, 
+   * 				Greg Guyles
    */
 
   /*
@@ -46,7 +50,7 @@ object Lab3_pekl2737 {
       case N(n) => n
       case B(false) => 0
       case B(true) => 1
-      case Undefined => Double.NaN
+      case Undefined => 0
       case S(s) => try s.toDouble catch { case _ => Double.NaN }
       case Function(_, _, _) => Double.NaN
     }
@@ -219,8 +223,8 @@ object Lab3_pekl2737 {
       case Call(e1, e2) if(isValue(e2)) => e1 match {
         case Function(None, x, ebody) => substitute(ebody, e2, x)
         case Function(Some(fun), x, ebody) => {
-          var v3 = Function(Some(fun), x, substitute(ebody, e2, x))
-          substitute(ebody, v3, fun)
+          val v3body = substitute(ebody, e2, x)
+          substitute(v3body, Function(Some(fun), x, ebody), fun)
         }
 
         case _ => throw new customException("This is a hack")
