@@ -140,6 +140,7 @@ object Lab3_pekl2737 {
       case N(_) | B(_) | Undefined | S(_) => e
       case Print(e1) => Print(subst(e1))
       case Unary(uop, e1) => Unary(uop, substitute(e1, v, x))
+      case Binary(op, e1, e2) => Binary(op, substitute(e1, v, x), substitute(e2, v, x)) 
       case Var(name) => v
       case _ => throw new UnsupportedOperationException
     }
@@ -164,9 +165,7 @@ object Lab3_pekl2737 {
       case Binary(And,v1, e2)   if(isValue(v1) && (v1 == B(false)))=> B(false)
       case Binary(Or, v1, e2)   if(isValue(e2) && (v1 == B(false)))=> e2
       case Binary(Or, v1, e2)   if(isValue(e2) && (v1 == B(true))) => B(true)
-      case Binary(Seq,e1, e2)   if(isValue(e1)) => {
-        e2
-      }
+      case Binary(Seq,e1, e2)   if(isValue(e1)) => e2
       
       case Binary(op, e1, e2) if(isValue(e1) && isValue(e2)) => op match {
         /*     doArith        */

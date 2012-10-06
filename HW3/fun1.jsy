@@ -1,2 +1,2 @@
-const a = 'asdfue';
-jsy.print( a )
+const a = 6;
+jsy.print( a + 1)
