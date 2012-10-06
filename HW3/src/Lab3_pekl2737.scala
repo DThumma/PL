@@ -117,7 +117,7 @@ object Lab3_pekl2737 {
       case Binary(Gt, e1, e2) => B(eToN(e1) > eToN(e2))
       case Binary(Ge, e1, e2) => B(eToN(e1) >= eToN(e2))
       
-      case Binary(And, e1, e2) => if (eToB(e1)) eToVal(e1) else B(false)
+      case Binary(And, e1, e2) => if (eToB(e1)) eToVal(e2) else B(false)
       case Binary(Or, e1, e2) => if (eToB(e1)) B(true) else eToVal(e2)
       
       case Binary(Seq, e1, e2) => eToVal(e1); eToVal(e2)
