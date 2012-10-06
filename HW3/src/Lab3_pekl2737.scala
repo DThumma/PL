@@ -180,7 +180,7 @@ object Lab3_pekl2737 {
         case (S(e1), _) => S(e1+toString(e2))
         case (_, S(e2)) => S(toString(e1) + e2)
         case (N(e1), N(e2)) => N(e1 + e2)
-        case _ => throw new UnsupportedOperationException
+        case _ => N(toNumber(e1)+toNumber(e2))
       }
       case Binary(And,v1, e2)   if(isValue(v1) && (v1 == B(true))) => e2
       case Binary(And,v1, e2)   if(isValue(v1) && (v1 == B(false)))=> B(false)
