@@ -1,4 +1,9 @@
+//const a = function a(x){
+//	return x > 0 ? a(x - 1) : 0
+//}
+//a(3)
 const a = function(x){
-	return x
+	return x > 5
 }
-a(3)
+a(4)
+//a(6)

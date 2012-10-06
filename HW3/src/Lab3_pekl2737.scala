@@ -163,7 +163,8 @@ object Lab3_pekl2737 {
       case Binary(op, e1, e2) => Binary(op, substitute(e1, v, x), substitute(e2, v, x)) 
       case Var(y) => if(x == y) v else e
       case ConstDecl(y,e1, e2) => ConstDecl(y, substitute(e1, v, x), if (x == y) e2 else substitute(e2, v, x))
-      
+      case Call(e1, e2) => Call(subst(e1), subst(e2))
+      case If(e1, e2, e3) => If(subst(e1), subst(e2), subst(e3))
       case _ => throw new UnsupportedOperationException
     }
   }
@@ -207,12 +208,21 @@ object Lab3_pekl2737 {
       case If(e1, e2, e3) if(isValue(e1) && e1==B(true)) => e2
       case If(e1, e2, e3) if(isValue(e1) && e1==B(false)) => e3
       case ConstDecl(x, v1, e2) if(isValue(v1)) => substitute(e2, v1, x) // substitute v1 for x into e2
-      case Call(e1, e2) if(isValue(e1) && isValue(e2)) => e1 match {
+//      case Call(Function(None, x, e1), v2) if (isValue(v2)) => substitute(e1, v2, x)
+//      case Call(Function(Some(fun), x, ebody), e2) => {
+//        var v3 = Function(Some(fun), x, substitute(ebody, e2, x))
+//        substitute(ebody, v3, fun)
+//      }
+
+//		case Call(Function(Some(x1), x2, e1), v2) if (isValue(v2)) => 
+
+      case Call(e1, e2) if(isValue(e2)) => e1 match {
         case Function(None, x, ebody) => substitute(ebody, e2, x)
         case Function(Some(fun), x, ebody) => {
           var v3 = Function(Some(fun), x, substitute(ebody, e2, x))
           substitute(ebody, v3, fun)
         }
+
         case _ => throw new customException("This is a hack")
             
       }
@@ -231,9 +241,9 @@ object Lab3_pekl2737 {
       case Unary(op, e1) if(!isValue(e1)) => Unary(op, step(e1))
       case If(e1, e2, e3) if(!isValue(e1)) => If(step(e1), e2, e3)
       case ConstDecl(x,v1, e2) if(!isValue(v1)) => ConstDecl(x, step(v1), e2)
-      case Call(e1, e2) if(isValue(e1) && !isValue(e2)) => Call(e1, step(e2))
-      case Call(e1, e2) if(!isValue(e1)) => Call(step(e1), e2)
-      case Call(e1, e2) => Call(step(e1), step(e2))
+      case Call(e1, e2) if(isValue(e1)) => Call(e1, step(e2))
+//      case Call(e1, e2) if(!isValue(e1)) => Call(step(e1), e2)
+      case Call(e1, e2) => Call(step(e1), e2)
    
       case _ => throw new UnsupportedOperationException
     }
