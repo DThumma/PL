@@ -1,6 +1,1 @@
-const d = 11;
-const a = 5;
-//const b = a;
-//const c = b+a;
-
-jsy.print(a)
+"a"+"b";

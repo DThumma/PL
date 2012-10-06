@@ -98,7 +98,12 @@ object Lab3_pekl2737 {
       case Unary(Neg, e1) => N(- eToN(e1))
       case Unary(Not, e1) => B(! eToB(e1))
       
-      case Binary(Plus, e1, e2) => N(eToN(e1) + eToN(e2))
+      case Binary(Plus, e1, e2) => (e1, e2) match {
+        case (N(e1), N(e2)) => N(e1 + e2)
+        case (S(e1), _)     => S(e1 + toString(e2))
+        case (_, S(e2))     => S(toString(e1) + e2)
+        case _ => N(eToN(e1) + eToN(e2))
+      }
         
       case Binary(Minus, e1, e2) => N(eToN(e1) - eToN(e2))
       case Binary(Times, e1, e2) => N(eToN(e1) * eToN(e2))

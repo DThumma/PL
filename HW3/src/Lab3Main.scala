@@ -27,8 +27,8 @@ object Lab3Main {
     
     if (debug) { println("Evaluating with Big-Step Interpreter and Dynamic Scoping ...") }
     
-//    val v = evaluate(expr)
-//    println(ast.pretty(v))
+    val v = evaluate(expr)
+    println(ast.pretty(v))
     
     if (debug) {
       println("------------------------------------------------------------")
@@ -40,8 +40,8 @@ object Lab3Main {
       if (ast.isValue(e)) e else evaluateWithStep(step(e), n + 1)
     }
     
-    val v1 = evaluateWithStep(expr, 0)
-    println(ast.pretty(v1))
+//    val v1 = evaluateWithStep(expr, 0)
+//    println(ast.pretty(v1))
   }
   
   def isJsy(file: File): Boolean = {
