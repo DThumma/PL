@@ -1,6 +1,2 @@
-/*
- * This program should crash under our "buggy" interpreter because
- * x is unbound when used.
- */
-const plus = function(x) { return function(y) { return x + y } };
-plus(3)(4)
+const a = 'asdfue';
+jsy.print( a )

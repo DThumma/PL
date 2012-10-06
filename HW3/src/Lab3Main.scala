@@ -27,8 +27,8 @@ object Lab3Main {
     
     if (debug) { println("Evaluating with Big-Step Interpreter and Dynamic Scoping ...") }
     
-    val v = evaluate(expr)
-    println(ast.pretty(v))
+//    val v = evaluate(expr)
+//    println(ast.pretty(v))
     
     if (debug) {
       println("------------------------------------------------------------")
