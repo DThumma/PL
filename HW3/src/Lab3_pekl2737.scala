@@ -126,6 +126,21 @@ object Lab3_pekl2737 {
       
       case ConstDecl(x, e1, e2) => eval(extend(env, x, eToVal(e1)), e2)
       
+      case Call(e1, e2) => eval(env, e1) match {
+      	case Function(None, x, eprime) => {  // non-recursive case
+      	  val v1 = eval(env, e1)
+      	  val env1 = extend(env, x, v1)
+      	  eval(env1, eprime)
+      	}
+		case v1 @ Function(Some(x1), x2, eprime) => {
+			val v2 = eval(env, e2)
+			val env1 = extend(env, x1, v1)
+			val env2 = extend(env1, x2, v2)
+			eval(env2, eprime)
+		}
+		case _ => throw new DynamicTypeError(e)
+      }
+      
       case _ => throw new UnsupportedOperationException
     }
   }
