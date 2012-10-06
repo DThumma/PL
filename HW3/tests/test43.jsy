@@ -1,0 +1,1 @@
+const a=5.5; const b=true; const c=6.1; const d=false; -5.1 + b ? d * 8.7 + 0.1 : c / 9.4 > !a * 7.2 === b && a < d

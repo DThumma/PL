@@ -1,0 +1,2 @@
+const a = 2.02; const b = 4.1; jsy.print(a); jsy.print(b); jsy.print(a + b), jsy.print(b / a)
+

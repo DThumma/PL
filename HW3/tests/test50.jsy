@@ -1,0 +1,5 @@
+const x = 3.2
+const y = x < 0 ? x : undefined
+jsy.print(x)
+jsy.print(y)
+y + 1.7

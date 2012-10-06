@@ -1,0 +1,5 @@
+jsy.print(6.9 / 0)
+jsy.print(6.2 / 1)
+jsy.print(6.3 / 2)
+jsy.print(6.4 / 3)  
+jsy.print(false / true + 1.9)

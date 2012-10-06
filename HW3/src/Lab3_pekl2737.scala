@@ -90,6 +90,7 @@ object Lab3_pekl2737 {
   def eval(env: Env, e: Expr): Expr = {
     def eToN(e: Expr): Double = toNumber(eval(env, e))
     def eToB(e: Expr): Boolean = toBoolean(eval(env, e))
+    def eToS(e: Expr): String = toString(eval(env,e))
     def eToVal(e: Expr): Expr = eval(env, e)
     e match {
       /* Base Cases */
@@ -102,12 +103,17 @@ object Lab3_pekl2737 {
       case Unary(Neg, e1) => N(- eToN(e1))
       case Unary(Not, e1) => B(! eToB(e1))
       
-      case Binary(Plus, e1, e2) => (e1, e2) match {
+      case Binary(Plus, e1, e2) => (eval(env, e1), eval(env, e2)) match {
         case (N(e1), N(e2)) => N(e1 + e2)
-        case (S(e1), _)     => S(e1 + toString(e2))
-        case (_, S(e2))     => S(toString(e1) + e2)
+        case (S(e1), _)     => S(e1 + eToS(e2))
+        case (_, S(e2))     => S(eToS(e1) + e2)
         case _ => N(eToN(e1) + eToN(e2))
       }
+//      case Binary(Plus, e1, e2) => {
+//        (eval(e1), eval(e2)) match => {
+//          case ()
+//        }
+//      }
         
       case Binary(Minus, e1, e2) => N(eToN(e1) - eToN(e2))
       case Binary(Times, e1, e2) => N(eToN(e1) * eToN(e2))
@@ -200,8 +206,8 @@ object Lab3_pekl2737 {
         case Times => N(toNumber(e1) * toNumber(e2))
         case Div   => N(toNumber(e1) / toNumber(e2))
         /*    DoEquality      */
-        case Eq    => B(toNumber(e1) == toNumber(e2))
-        case Ne    => B(toNumber(e1) != toNumber(e2))
+        case Eq    => B(e1 == e2)
+        case Ne    => B(e1 != e2)
         /*    DoInequality    */
         case Ge    => B(toNumber(e1) >= toNumber(e2))
         case Gt    => B(toNumber(e1) >  toNumber(e2))
@@ -209,8 +215,8 @@ object Lab3_pekl2737 {
         case lt    => B(toNumber(e1) <  toNumber(e2))        
       }
       
-      case If(e1, e2, e3) if(isValue(e1) && e1==B(true)) => e2
-      case If(e1, e2, e3) if(isValue(e1) && e1==B(false)) => e3
+      case If(e1, e2, e3) if(isValue(e1) && B(toBoolean(e1))==B(true)) => e2
+      case If(e1, e2, e3) if(isValue(e1) && B(toBoolean(e1))==B(false)) => e3
       case ConstDecl(x, v1, e2) if(isValue(v1)) => substitute(e2, v1, x) // substitute v1 for x into e2
 //      case Call(Function(None, x, e1), v2) if (isValue(v2)) => substitute(e1, v2, x)
 //      case Call(Function(Some(fun), x, ebody), e2) => {
