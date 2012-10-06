@@ -128,7 +128,7 @@ object Lab3_pekl2737 {
       
       case Call(e1, e2) => eval(env, e1) match {
       	case Function(None, x, eprime) => {  // non-recursive case
-      	  val v1 = eval(env, e1)
+      	  val v1 = eval(env, e2)
       	  val env1 = extend(env, x, v1)
       	  eval(env1, eprime)
       	}
@@ -161,8 +161,9 @@ object Lab3_pekl2737 {
       case Print(e1) => Print(subst(e1))
       case Unary(uop, e1) => Unary(uop, substitute(e1, v, x))
       case Binary(op, e1, e2) => Binary(op, substitute(e1, v, x), substitute(e2, v, x)) 
-      case ConstDecl(name, v1, env) => ConstDecl(name, substitute(env, v, x), env)
-      case Var(name) => v
+      case Var(y) => if(x == y) v else e
+      case ConstDecl(y,e1, e2) => ConstDecl(y, substitute(e1, v, x), if (x == y) e2 else substitute(e2, v, x))
+      
       case _ => throw new UnsupportedOperationException
     }
   }
@@ -173,8 +174,8 @@ object Lab3_pekl2737 {
       /* Base Cases: Do Rules */
       case Print(v1) if (isValue(v1)) => println(pretty(v1)); Undefined
       
-      case Unary(Neg, N(v1)) => N(-v1) // Do Negative
-      case Unary(Not, B(v1)) => B(!v1) // Do Not
+      case Unary(Neg, v1) => N(-toNumber(v1)) // Do Negative
+      case Unary(Not, v1) => B(!toBoolean(v1)) // Do Not
       
       case Binary(Plus, e1, e2) if(isValue(e1) && isValue(e2)) => (e1, e2) match {
         case (S(e1), _) => S(e1+toString(e2))
@@ -232,6 +233,7 @@ object Lab3_pekl2737 {
       case ConstDecl(x,v1, e2) if(!isValue(v1)) => ConstDecl(x, step(v1), e2)
       case Call(e1, e2) if(isValue(e1) && !isValue(e2)) => Call(e1, step(e2))
       case Call(e1, e2) if(!isValue(e1)) => Call(step(e1), e2)
+      case Call(e1, e2) => Call(step(e1), step(e2))
    
       case _ => throw new UnsupportedOperationException
     }

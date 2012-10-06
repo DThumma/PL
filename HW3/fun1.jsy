@@ -1,1 +1,4 @@
-true && false
+const a = function(x){
+	return x
+}
+a(3)
