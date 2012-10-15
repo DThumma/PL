@@ -1,7 +1,10 @@
 //function moreFun(x){
 //	return x > 0 ? moreFun(x - 1)*x : 1
 //} (3)
-
-const a = function (x) { return x }
-const b = 5
-a(3) === b
+const a = function(x){
+	const y = 1;
+	return x
+};
+const y = 0;
+a(3);
+y;

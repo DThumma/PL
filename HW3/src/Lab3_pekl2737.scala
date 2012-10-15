@@ -172,7 +172,7 @@ object Lab3_pekl2737 {
       case Unary(uop, e1) => Unary(uop, substitute(e1, v, x))
       case Binary(op, e1, e2) => Binary(op, substitute(e1, v, x), substitute(e2, v, x)) 
       case Var(y) => if(x == y) v else e
-      case ConstDecl(y,e1, e2) => ConstDecl(y, substitute(e1, v, x), if (x == y) e2 else substitute(e2, v, x))
+      case ConstDecl(y,e1, e2) => ConstDecl(y, subst(e1), if (x == y) e2 else subst(e2))
       case Call(e1, e2) => Call(subst(e1), subst(e2))
       case If(e1, e2, e3) => If(subst(e1), subst(e2), subst(e3))
       case _ => throw new UnsupportedOperationException
@@ -218,13 +218,6 @@ object Lab3_pekl2737 {
       case If(e1, e2, e3) if(isValue(e1) && B(toBoolean(e1))==B(true)) => e2
       case If(e1, e2, e3) if(isValue(e1) && B(toBoolean(e1))==B(false)) => e3
       case ConstDecl(x, v1, e2) if(isValue(v1)) => substitute(e2, v1, x) // substitute v1 for x into e2
-//      case Call(Function(None, x, e1), v2) if (isValue(v2)) => substitute(e1, v2, x)
-//      case Call(Function(Some(fun), x, ebody), e2) => {
-//        var v3 = Function(Some(fun), x, substitute(ebody, e2, x))
-//        substitute(ebody, v3, fun)
-//      }
-
-//		case Call(Function(Some(x1), x2, e1), v2) if (isValue(v2)) => 
 
       case Call(e1, e2) if(isValue(e2)) => e1 match {
         case Function(None, x, ebody) => substitute(ebody, e2, x)
