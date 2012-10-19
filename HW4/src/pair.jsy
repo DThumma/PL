@@ -1,0 +1,21 @@
+/* Example: Typed JavaScripty */
+
+const Pair = {
+  pair: function(a: number, b: number) {
+    return { _1: a, _2: b }
+  },
+  map: function(f: (i: number) => number, p: { _1: number; _2: number }) {
+    return { _1: f(p._1), _2: f(p._2) }
+  }
+}
+
+const r0 = Pair.pair(1, 2)
+
+/* We permit the same shorthand as TypeScript in the concrete syntax
+ * for anonymous functions: (x: t, ...) => e
+ */
+const r1 = Pair.map((i: number) => i + 1, r0)
+
+jsy.print(r0)
+
+jsy.print(r1)
