@@ -36,27 +36,36 @@ object Lab4_pekl2737 {
   /* Lists */
   
   def compressRec[A](l: List[A]): List[A] = l match {
-    case Nil | _ :: Nil => throw new UnsupportedOperationException
-    case h1 :: (t1 @ (h2 :: _)) => throw new UnsupportedOperationException
+    case Nil | _ :: Nil => l
+    case h1 :: (t1 @ (h2 :: _)) => if(h1 == h2) compressRec(t1) else h1::compressRec(t1)
   }
   
   def compressFold[A](l: List[A]): List[A] = l.foldRight(Nil: List[A]){
-    (h, acc) => throw new UnsupportedOperationException
+    (h, acc) => acc match{
+      case Nil    => h :: acc
+      case h1 :: t => if(h == h1) acc else h :: acc
+    }
   }
   
-  def testCompress(compress: List[Int] => List[Int]): Boolean =
+  def testCompress(compress: List[Int] => List[Int]): Boolean = {
+    println(compress(List(1, 2, 2, 3, 3, 3)))
     compress(List(1, 2, 2, 3, 3, 3)) == List(1, 2, 3)
-  //assert(testCompress(compressRec))
-  //assert(testCompress(compressFold))
+    //val stuff = compress(List(1, 2, 2, 3, 3, 3))
+  }
+  assert(testCompress(compressRec))
+  assert(testCompress(compressFold))
   
   def mapFirst[A](f: A => Option[A])(l: List[A]): List[A] = l match {
-    case Nil => throw new UnsupportedOperationException
-    case h :: t => throw new UnsupportedOperationException 
+    case Nil => l
+    case h :: t => f(h) match {
+      case Some(x) => x :: t 
+      case None => h :: mapFirst(f)(t)
+    }
   }
   
   def testMapFirst(mapFirst: (Int => Option[Int]) => List[Int] => List[Int]): Boolean =
     mapFirst((i: Int) => if (i < 0) Some(-i) else None)(List(1, 2, -3, 4, -5)) == List(1, 2, 3, 4, -5)
-  //assert(testMapFirst(mapFirst))
+  assert(testMapFirst(mapFirst))
   
   /* Trees */
   
@@ -65,16 +74,31 @@ object Lab4_pekl2737 {
       case Empty => Node(Empty, n, Empty)
       case Node(l, d, r) => if (n < d) Node(l insert n, d, r) else Node(l, d, r insert n)
     } 
-    
-    def map(f: Int => Int): Tree = this match {
-      case Empty => throw new UnsupportedOperationException
-      case Node(l, d, r) => throw new UnsupportedOperationException
-    }
-    
+
+// ############## WE DON'T NEED TO IMPLEMENT THIS, BUT GET EXTRA CREDIT IF WE DO ##########################
+//    def map(f: Int => Int): Tree = this match {
+//      case Empty => Empty
+//      case Node(l, d, r) => (l, d, r) match {
+//        case (Empty, d, Empty) => map
+//        case (l, d, Empty) => map(f(d))
+//        
+//      }
+//    }
+// ########################################################################################################
+   
     def foldLeft[A](z: A)(f: (A, Int) => A): A = {
       def loop(acc: A, t: Tree): A = t match {
-        case Empty => throw new UnsupportedOperationException
-        case Node(l, d, r) => throw new UnsupportedOperationException
+        case Empty => acc
+        case Node(l, d, r) => (l, d, r) match {
+          case (Empty, d, Empty) => f(acc, d)
+          case (l, d, Empty)     => loop(f(acc, d), l) // compress all things in the left
+          case (Empty, d, r)     => loop(f(acc, d), r)
+          case (l, d, r)		 => {
+            val v1 = loop(f(acc, 0), l)
+            val v2 = loop(v1, r)
+            f(v2, d)
+          }
+        }
       }
       loop(z, this)
     }
@@ -85,19 +109,25 @@ object Lab4_pekl2737 {
   def treeFromList(l: List[Int]): Tree =
     l.foldLeft(Empty: Tree){ (acc, i) => acc insert i }
   
-  def incr(t: Tree): Tree = t.map(i => i + 1)
-  //def incr(t: SearchTree): SearchTree = t.map{ i => i + 1 }
-  //def incr(t: SearchTree): SearchTree = t.map{ _ + 1 } // using placeholder notation
-  
-  def testIncr(incr: Tree => Tree): Boolean =
-    incr(treeFromList(List(1,2,3))) == treeFromList(List(2,3,4))
-  //assert(testIncr(incr))
+// ############## WE DON'T NEED TO IMPLEMENT THIS, BUT GET EXTRA CREDIT IF WE DO ##########################
+//  def incr(t: Tree): Tree = t.map(i => i + 1)
+//  //def incr(t: SearchTree): SearchTree = t.map{ i => i + 1 }
+//  //def incr(t: SearchTree): SearchTree = t.map{ _ + 1 } // using placeholder notation
+//  
+//  def testIncr(incr: Tree => Tree): Boolean =
+//    incr(treeFromList(List(1,2,3))) == treeFromList(List(2,3,4))
+//  //assert(testIncr(incr))
+// ########################################################################################################
   
   def sum(t: Tree): Int = t.foldLeft(0){ (acc, d) => acc + d }
   
-  def testSum(sum: Tree => Int): Boolean =
-    sum(treeFromList(List(1,2,3))) == 6
-  //assert(testSum(sum))
+  def testSum(sum: Tree => Int): Boolean = {
+    val l = List(3, 2, 3, 1, 3, 1)
+	println(treeFromList(l))
+    println(sum(treeFromList(l)))
+    sum(treeFromList(l)) == 13
+  }
+  assert(testSum(sum))
   
   def strictlyOrdered(t: Tree): Boolean = {
     val (b, _) = t.foldLeft((true, None: Option[Int])){
