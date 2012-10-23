@@ -94,9 +94,9 @@ object Lab4_pekl2737 {
           case (l, d, Empty)     => loop(f(acc, d), l) // compress all things in the left
           case (Empty, d, r)     => loop(f(acc, d), r)
           case (l, d, r)		 => {
-            val v1 = loop(f(acc, 0), l)
-            val v2 = loop(v1, r)
-            f(v2, d)
+            val acc1 = loop(acc, l)
+            val acc2 = f(acc1, d)
+            loop(acc2, r)
           }
         }
       }
@@ -122,10 +122,10 @@ object Lab4_pekl2737 {
   def sum(t: Tree): Int = t.foldLeft(0){ (acc, d) => acc + d }
   
   def testSum(sum: Tree => Int): Boolean = {
-    val l = List(3, 2, 3, 1, 3, 1)
+    val l = List(3, 2, 3)
 	println(treeFromList(l))
     println(sum(treeFromList(l)))
-    sum(treeFromList(l)) == 13
+    sum(treeFromList(l)) == 8
   }
   assert(testSum(sum))
   
@@ -157,6 +157,7 @@ object Lab4_pekl2737 {
       case S(_) => TString
       case Var(x) => env(x)
       case ConstDecl(x, e1, e2) => typeInfer(env + (x -> typ(e1)), e2)
+      case Binary(Plus)
       case _ => throw new UnsupportedOperationException
     }
   }
