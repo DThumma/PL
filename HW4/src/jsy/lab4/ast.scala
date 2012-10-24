@@ -56,7 +56,7 @@ object ast {
   case class If(e1: Expr, e2: Expr, e3: Expr) extends Expr
   
   /* Functions */
-  case class Function(p: Option[String], params: List[(String,Typ)], e1: Expr) extends Expr
+  case class Function(p: Option[String], params: List[(String,Typ)], tann: Option[Typ], e1: Expr) extends Expr
   case class Call(e1: Expr, args: List[Expr]) extends Expr
   
   /* I/O */
@@ -77,7 +77,7 @@ object ast {
   
   /* Define values. */
   def isValue(e: Expr): Boolean = e match {
-    case N(_) | B(_) | Undefined | S(_) | Function(_, _, _) => true
+    case N(_) | B(_) | Undefined | S(_) | Function(_, _, _, _) => true
     case Obj(fields) if (fields forall { case (_, ei) => isValue(ei) }) => true
     case _ => false
   }
@@ -95,7 +95,7 @@ object ast {
       case B(b) => b.toString
       case Undefined => "undefined"
       case S(s) => s
-      case Function(p, _, _) =>
+      case Function(p, _, _, _) =>
         "[Function%s]".format(p match { case None => "" case Some(s) => ": " + s })
       case Obj(fields) =>
         val pretty_fields =
@@ -139,7 +139,7 @@ object ast {
   def freeVars(e: Expr): Set[String] = e match {
     case Var(x) => Set(x)
     case ConstDecl(x, e1, e2) => freeVars(e1) | (freeVars(e2) - x)
-    case Function(p, params, e1) => freeVars(e1) -- (params map { _._1 }) -- p
+    case Function(p, params, _, e1) => freeVars(e1) -- (params map { _._1 }) -- p
     case N(_) | B(_) | Undefined | S(_) => Set.empty
     case Unary(_, e1) => freeVars(e1)
     case Binary(_, e1, e2) => freeVars(e1) | freeVars(e2)

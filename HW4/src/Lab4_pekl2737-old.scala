@@ -1,9 +1,9 @@
-object Lab4_pekl2737 {
+object Lab4_pekl2737_old {
   import jsy.lab4.ast._
   
   /*
    * CSCI 3155: Lab 4
-   * <Your Name>
+   * Peter Klipfel
    * 
    * Partner: <Your Partner's Name>
    * Collaborators: <Any Collaborators>
@@ -143,7 +143,10 @@ object Lab4_pekl2737 {
   /* Type Inference */
   
   def hasFunctionTyp(t: Typ): Boolean = t match {
-    case _ => throw new UnsupportedOperationException
+    case TFunction(_, _) => true
+    case TObj(fieldtypes) => fieldtypes exists { case (_,t) => hasFunctionTyp(t)}
+    
+    case _ => false
   }
   
   def typeInfer(env: Map[String,Typ], e: Expr): Typ = {
@@ -157,27 +160,14 @@ object Lab4_pekl2737 {
       case S(_) => TString
       case Var(x) => env(x)
       case ConstDecl(x, e1, e2) => typeInfer(env + (x -> typ(e1)), e2)
-      case Unary(Neg, e1) => typ(e1) match {
-        case TNumber => TNumber
-        case tgot => err(tgot, e1)
+      case GetField(e1, f) => typ(e1) match {
+        case tgot @ TObj(fieldtypes) => fieldtypes.get(f) match { // could use get_or_else?
+          case None => err(tgot, e1)
+          case Some(t) => t
+        }
       }
-      case Function(p, params, tann, e1) => {
-        // Bind to env1 an environment that extends env with an appropriate binding if
-        // the function is potentially recursive.
-        val env1 = (p, tann) match {
-          case (Some(f), Some(rt)) =>
-            val tprime = TFunction(params, rt)
-            env + (f -> tprime)
-          case (None, _) => env
-          case _ => err(TUndefined, e1)
-        }
-        // Bind to env2 an environment that extends env1 with bindings for params.
-        val env2 = throw new UnsupportedOperationException
-        // Match on whether the return type is specified.
-        tann match {
-          case None => throw new UnsupportedOperationException
-          case Some(rt) => throw new UnsupportedOperationException
-        }
+      case Binary(Eq|Ne, e1, e2) => typ(e1) match {
+        case t1 if(!hasFunctionTyp(t1)) => /* fix this... */ t1
       }
       case _ => throw new UnsupportedOperationException
     }
@@ -225,6 +215,18 @@ object Lab4_pekl2737 {
       case _ => throw new UnsupportedOperationException
     }
   }
+  
+//  case Function(p, params, tann, e1) => {
+//    val env1 = (pc, tann) match {
+//      case (some(f), some(rt)) =>
+//        val tprime = TFnction(params, rt)
+//        env+(f -> tprime)
+//      case (None, _) => env
+//      case _ => err(TUndefined, e1)
+//    }
+//    val env2 = throw shit
+//    tann
+//  }
   
   def step(e: Expr): Expr = {
     require(!isValue(e))
