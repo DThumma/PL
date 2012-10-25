@@ -129,9 +129,12 @@ object Lab4_pekl2737 {
   }
   assert(testSum(sum))
   
-  def strictlyOrdered(t: Tree): Boolean = {
+  def strictlyOrdered(t: Tree): Boolean = {    
     val (b, _) = t.foldLeft((true, None: Option[Int])){
-      throw new UnsupportedOperationException
+      (acc, d) => acc match{
+        case (b1, None) => (b1, Some(d))
+        case (b2, nextInt) =>(nextInt.get < d && b2, Some(d)) 
+      }
     }
     b
   }
@@ -175,8 +178,9 @@ object Lab4_pekl2737 {
       	case Eq | Ne => (e1, e2) match {
       	  case (Function(a, b, c, d), _) => throw new StuckError(e1)
       	  case (_, Function(a, b, c, d)) => throw new StuckError(e2)
-      	  case _ => asdfsdjfasd
+      	  case _ => throw new UnsupportedOperationException
       	}
+      	case _ => throw new UnsupportedOperationException
       }
       case Unary(Neg, e1) => typ(e1) match {
         case TNumber => TNumber
