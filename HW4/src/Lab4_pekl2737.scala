@@ -37,7 +37,7 @@ object Lab4_pekl2737 {
   
   def compressRec[A](l: List[A]): List[A] = l match {
     case Nil | _ :: Nil => l
-    case h1 :: (t1 @ (h2 :: _)) => if(h1 == h2) compressRec(t1) else h1::compressRec(t1)
+    case h1 :: (t1 @ (h2 :: _)) => if(h1 == h2) compressRec(t1) else h1 :: compressRec(t1)
   }
   
   def compressFold[A](l: List[A]): List[A] = l.foldRight(Nil: List[A]){
@@ -197,11 +197,22 @@ object Lab4_pekl2737 {
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with bindings for params.
-        val env2 = throw new UnsupportedOperationException
+        // take what we got from env1 and add all the parameter types '++' adds a whole collection of key value pairs
+        val env2 = params.foldLeft(env1) {
+          case (acc, (xi, ti)) => acc + (xi -> ti)
+        }
         // Match on whether the return type is specified.
         tann match {
-          case None => throw new UnsupportedOperationException
-          case Some(rt) => throw new UnsupportedOperationException
+          case None => {
+           val tau = typeInfer(env2,e1)
+           val tauPrime = TFunction(params, tau)
+           tauPrime
+          }
+          case Some(rt) => {
+            val tau = typeInfer(env2, e1)
+            val tauPrime = TFunction(params, tau)
+            if(tauPrime != TFunction(params, rt)) err(tau, e1) else TFunction(params, rt)
+          }
         }
       }
       case _ => throw new UnsupportedOperationException
@@ -271,6 +282,11 @@ object Lab4_pekl2737 {
       case Binary(Or, B(b1), e2) => if (b1) B(true) else e2
       case ConstDecl(x, v1, e2) if isValue(v1) => substitute(e2, v1, x)
       /*** Fill-in more cases here. ***/
+      case GetField(Obj(fields), f) if (fields.forall {
+        case (_, vi) => isValue(vi) }) => fields.get(f) match {
+          case None => throw new StuckError(e)
+          case Some(v) => v
+        }      
         
       /* Inductive Cases: Search Rules */
       case Print(e1) => Print(step(e1))
