@@ -157,6 +157,27 @@ object Lab4_pekl2737 {
       case S(_) => TString
       case Var(x) => env(x)
       case ConstDecl(x, e1, e2) => typeInfer(env + (x -> typ(e1)), e2)
+      case Binary(op, e1, e2) => op match {
+      	case Plus => (typ(e1), typ(e2)) match {
+	      case (TNumber, TNumber) => TNumber
+	      case (TString, TString) => TString
+	      case (_, tgot: Typ) => err(tgot, e1)
+      	}
+      	case Minus | Times | Div => (typ(e1), typ(e2)) match {
+      	  case (TNumber, TNumber) => TNumber
+      	  case (_, tgot: Typ) => err(tgot, e1)
+      	}
+      	case Lt | Le | Gt | Ge => (typ(e1), typ(e2)) match {
+      	  case (TNumber, TNumber) => TNumber
+      	  case (TString, TString) => TString
+	      case (_, tgot: Typ) => err(tgot, e1)
+      	}
+      	case Eq | Ne => (e1, e2) match {
+      	  case (Function(a, b, c, d), _) => throw new StuckError(e1)
+      	  case (_, Function(a, b, c, d)) => throw new StuckError(e2)
+      	  case _ => asdfsdjfasd
+      	}
+      }
       case Unary(Neg, e1) => typ(e1) match {
         case TNumber => TNumber
         case tgot => err(tgot, e1)
