@@ -141,10 +141,12 @@ object Lab4_pekl2737 {
   /* Type Inference */
   
   def hasFunctionTyp(t: Typ): Boolean = t match {
-    case _ => throw new UnsupportedOperationException
-  }
-  
-  def typeInfer(env: Map[String,Typ], e: Expr): Typ = {
+   case TFunction(_, _) => true
+   case TObj(fieldtypes) => fieldtypes exists { case (_, t) => hasFunctionTyp(t) }
+   case _ => false
+ }
+
+ def typeInfer(env: Map[String,Typ], e: Expr): Typ = {
    def typ(e1: Expr) = typeInfer(env, e1)
    def err[T](tgot: Typ, e1: Expr): T = throw new StaticTypeError(tgot, e1, e)
    e match {
@@ -237,13 +239,12 @@ object Lab4_pekl2737 {
            val tau = typeInfer(env2, e1)
            val tauPrime = TFunction(params, tau)
            if(tauPrime != TFunction(params, rt)) err(tau, e1) else TFunction(params, rt)
-         }
-       }
-     }
-     case _ => throw new UnsupportedOperationException
-   }
-  }
-  
+          }
+        }
+      }
+      case _ => throw new UnsupportedOperationException
+    }
+  }  
   def inferType(e: Expr): Typ = typeInfer(Map.empty, e)
   
   /* Small-Step Interpreter */
@@ -300,6 +301,9 @@ object Lab4_pekl2737 {
       case Binary(Seq, v1, e2) if isValue(v1) => e2
       case Binary(Plus, S(s1), S(s2)) => S(s1 + s2)
       case Binary(Plus, N(n1), N(n2)) => N(n1 + n2)
+      case Binary(Minus, N(n1), N(n2)) => N(n1 - n2)
+      case Binary(Times, N(n1), N(n2)) => N(n1 * n2)
+      case Binary(Div, N(n1), N(n2))   => N(n1 / n2)
       case Binary(bop @ (Lt|Le|Gt|Ge), v1, v2) if isValue(v1) && isValue(v2) => B(inequalityVal(bop, v1, v2))
       case Binary(Eq, v1, v2) if isValue(v1) && isValue(v2) => B(v1 == v2)
       case Binary(Ne, v1, v2) if isValue(v1) && isValue(v2) => B(v1 != v2)
