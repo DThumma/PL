@@ -89,19 +89,12 @@ object Lab4_pekl2737 {
     def foldLeft[A](z: A)(f: (A, Int) => A): A = {
       def loop(acc: A, t: Tree): A = t match {
         case Empty => acc
-        case Node(l, d, r) => (l, d, r) match {
-          case (Empty, d, Empty) => f(acc, d)
-          case (l, d, Empty)     => loop(f(acc, d), l) // compress all things in the left
-          case (Empty, d, r)     => loop(f(acc, d), r)
-          case (l, d, r)		 => {
-            val acc1 = loop(acc, l)
-            val acc2 = f(acc1, d)
-            loop(acc2, r)
-          }
-        }
+        case Node(l, d, r) => loop(f(loop(acc, l), d), r)         
       }
       loop(z, this)
     }
+
+
   }
   case object Empty extends Tree
   case class Node(l: Tree, d: Int, r: Tree) extends Tree
@@ -138,6 +131,8 @@ object Lab4_pekl2737 {
     }
     b
   }
+
+
   
   def testStrictlyOrdered(strictlyOrdered: Tree => Boolean): Boolean =
     !strictlyOrdered(treeFromList(List(1,1,2)))
@@ -282,11 +277,15 @@ object Lab4_pekl2737 {
       case Binary(Or, B(b1), e2) => if (b1) B(true) else e2
       case ConstDecl(x, v1, e2) if isValue(v1) => substitute(e2, v1, x)
       /*** Fill-in more cases here. ***/
+      case If(B(true), e2, e3)  => e2
+      case If(B(false), e2, e3) => e3
       case GetField(Obj(fields), f) if (fields.forall {
         case (_, vi) => isValue(vi) }) => fields.get(f) match {
           case None => throw new StuckError(e)
           case Some(v) => v
-        }      
+        }
+//      case Function(name, params, tann, body) => throw new UnsupportedOperationException
+      
         
       /* Inductive Cases: Search Rules */
       case Print(e1) => Print(step(e1))
@@ -296,6 +295,14 @@ object Lab4_pekl2737 {
       case If(e1, e2, e3) => If(step(e1), e2, e3)
       case ConstDecl(x, e1, e2) => ConstDecl(x, step(e1), e2)
       /*** Fill-in more cases here. ***/
+      case Call(e1, args) if(!isValue(e1))=> Call(step(e1), args)
+      case Call(e1, args) => throw new UnsupportedOperationException
+      case GetField(e1, f) => GetField(step(e1), f)
+//      case Obj(fields) => Obj(step(fields.forall {
+//        case(vi, _) => if(!isValue(vi)){
+//          step(vi)
+//        }
+//      }))
       
       /* Everything else is a stuck error. */
       case _ => throw new StuckError(e)
