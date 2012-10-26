@@ -314,7 +314,20 @@ object Lab4_pekl2737 {
           case None => throw new StuckError(e)
           case Some(v) => v
         }
-
+      case Call(Function(None, params, _, e1), args) if (args.foldLeft(true)((truth, x) => truth && isValue(x))) => {
+        val zippedList = params zip args
+        zippedList.foldLeft(e1){(express, x) => x match {
+            case((name, _), value) => substitute(express, value, name)
+          }
+        } 
+      }
+      case Call(f1 @ Function(Some(f), params, _, e1), args) if (args.foldLeft(true)((truth, x) => truth && isValue(x))) => {
+        val zippedList = params zip args
+        zippedList.foldLeft(e1){(express, x) => x match {
+            case((name, _), value) => substitute(express, value, name); substitute(express, f1, f)
+          }
+        } 
+      }
         
       /* Inductive Cases: Search Rules */
       case Print(e1) => Print(step(e1))
