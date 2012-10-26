@@ -6,7 +6,7 @@ object Lab4_pekl2737 {
    * <Your Name>
    * 
    * Partner: <Your Partner's Name>
-   * Collaborators: <Any Collaborators>
+   * Collaborators: CSEL Family
    */
 
   /*
@@ -314,8 +314,7 @@ object Lab4_pekl2737 {
           case None => throw new StuckError(e)
           case Some(v) => v
         }
-//      case Function(name, params, tann, body) => throw new UnsupportedOperationException
-//      case Call
+
         
       /* Inductive Cases: Search Rules */
       case Print(e1) => Print(step(e1))
@@ -325,8 +324,10 @@ object Lab4_pekl2737 {
       case If(e1, e2, e3) => If(step(e1), e2, e3)
       case ConstDecl(x, e1, e2) => ConstDecl(x, step(e1), e2)
       /*** Fill-in more cases here. ***/
-      case Call(e1, args) if(!isValue(e1))=> Call(step(e1), args)
-      case Call(e1, args) => throw new UnsupportedOperationException
+      case Call(v1 @ Function(_, _, _, _), args) => {
+        val args1 = mapFirst{(a:Expr) => if(!isValue(a)) Some(step(a)) else None}(args)
+        Call(v1, args)
+      }
       case GetField(e1, f) => GetField(step(e1), f)
       case Obj(f) => {
         val fList = f.toList
@@ -339,16 +340,6 @@ object Lab4_pekl2737 {
         val fMap = newList.toMap
         Obj(fMap)
       }
-//      case Obj(fields) => {
-//        fields.foreach {
-//        	case(_, vi) => } 
-//        Obj(fields)
-//      }
-//      case Obj(fields) => Obj(step(fields.forall {
-//        case(vi, _) => if(!isValue(vi)){
-//          step(vi)
-//        }
-//      }))
       
       /* Everything else is a stuck error. */
       case _ => throw new StuckError(e)
