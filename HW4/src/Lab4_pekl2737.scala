@@ -145,73 +145,103 @@ object Lab4_pekl2737 {
   }
   
   def typeInfer(env: Map[String,Typ], e: Expr): Typ = {
-    def typ(e1: Expr) = typeInfer(env, e1)
-    def err[T](tgot: Typ, e1: Expr): T = throw new StaticTypeError(tgot, e1, e)
-    e match {
-      case Print(e1) => typ(e1); TUndefined
-      case N(_) => TNumber
-      case B(_) => TBool
-      case Undefined => TUndefined
-      case S(_) => TString
-      case Var(x) => env(x)
-      case ConstDecl(x, e1, e2) => typeInfer(env + (x -> typ(e1)), e2)
-      case Binary(op, e1, e2) => op match {
-      	case Plus => (typ(e1), typ(e2)) match {
-	      case (TNumber, TNumber) => TNumber
-	      case (TString, TString) => TString
-	      case (_, tgot: Typ) => err(tgot, e1)
-      	}
-      	case Minus | Times | Div => (typ(e1), typ(e2)) match {
-      	  case (TNumber, TNumber) => TNumber
-      	  case (_, tgot: Typ) => err(tgot, e1)
-      	}
-      	case Lt | Le | Gt | Ge => (typ(e1), typ(e2)) match {
-      	  case (TNumber, TNumber) => TNumber
-      	  case (TString, TString) => TString
-	      case (_, tgot: Typ) => err(tgot, e1)
-      	}
-      	case Eq | Ne => (e1, e2) match {
-      	  case (Function(a, b, c, d), _) => throw new StuckError(e1)
-      	  case (_, Function(a, b, c, d)) => throw new StuckError(e2)
-      	  case _ => throw new UnsupportedOperationException
-      	}
-      	case _ => throw new UnsupportedOperationException
-      }
-      case Unary(Neg, e1) => typ(e1) match {
-        case TNumber => TNumber
-        case tgot => err(tgot, e1)
-      }
-      case Function(p, params, tann, e1) => {
-        // Bind to env1 an environment that extends env with an appropriate binding if
-        // the function is potentially recursive.
-        val env1 = (p, tann) match {
-          case (Some(f), Some(rt)) =>
-            val tprime = TFunction(params, rt)
-            env + (f -> tprime)
-          case (None, _) => env
-          case _ => err(TUndefined, e1)
-        }
-        // Bind to env2 an environment that extends env1 with bindings for params.
-        // take what we got from env1 and add all the parameter types '++' adds a whole collection of key value pairs
-        val env2 = params.foldLeft(env1) {
-          case (acc, (xi, ti)) => acc + (xi -> ti)
-        }
-        // Match on whether the return type is specified.
-        tann match {
-          case None => {
-           val tau = typeInfer(env2,e1)
+   def typ(e1: Expr) = typeInfer(env, e1)
+   def err[T](tgot: Typ, e1: Expr): T = throw new StaticTypeError(tgot, e1, e)
+   e match {
+     case Print(e1) => typ(e1); TUndefined
+     case N(_) => TNumber
+     case B(_) => TBool
+     case Undefined => TUndefined
+     case S(_) => TString
+     case Var(x) => env(x)
+     case ConstDecl(x, e1, e2) => typeInfer(env + (x -> typ(e1)), e2)
+     case Obj(params) => TObj(params.map{ case (k,v) => (k,typ(v)) })
+     case Binary(op, e1, e2) => op match {
+         case Plus => (typ(e1), typ(e2)) match {
+          case (TNumber, TNumber) => TNumber
+          case (TString, TString) => TString
+          case (_, tgot: Typ) => err(tgot, e1)
+         }
+         case Minus | Times | Div => (typ(e1), typ(e2)) match {
+           case (TNumber, TNumber) => TNumber
+           case (_, tgot: Typ) => err(tgot, e1)
+         }
+         case Lt | Le | Gt | Ge => (typ(e1), typ(e2)) match {
+           case (TNumber, TNumber) => TBool
+         case (TString, TString) => TBool
+         case (_, tgot: Typ) => err(tgot, e1)
+       }
+       case Eq | Ne => typ(e1) match {
+         case tgot if (hasFunctionTyp(tgot)) => err(tgot, e1)
+         case _ => typ(e2) match {
+           case tgot if (hasFunctionTyp(tgot)) => err(tgot, e2)
+           case _ => TBool
+         }
+       }
+       case Seq => typ(e1)
+                   typ(e2)
+       case And | Or => (typ(e1), typ(e2)) match {
+         case (TBool, TBool) => TBool
+         case (_, tgot) => err(tgot, e1)
+       }
+       case _ => throw new UnsupportedOperationException
+     }
+     case Unary(Neg, e1) => typ(e1) match {
+       case TNumber => TNumber
+       case tgot => err(tgot, e1)
+     }
+     case Unary(Not, e1) => typ(e1) match {
+       case TBool => TBool
+       case tgot => err(tgot, e1)
+     }
+     case If(e1, e2, e3) => (typ(e1),typ(e2),typ(e3)) match {
+       case (TBool, _, tgot) => tgot
+       //case TBool => if (true) typ(e2) else typ(e3) // Replace with above
+       case (tgot,_,_) => err(tgot, e1)
+     }
+     case Call(e1, args) => typ(e1) match{
+       case TFunction(params, rett) if (params.length == args.length) => {
+         //zip and check parameter types
+         val pairs = params zip args
+         pairs.foreach{
+           pair => val (v1, v2) = pair
+           if (v1._2 != typ(v2)) err(typ(v2), v2) else typ(v2)
+         };
+         rett
+         }         
+       case tgot => err(tgot, e1)
+     }
+     case Function(p, params, tann, e1) => {
+       // Bind to env1 an environment that extends env with an appropriate binding if
+       // the function is potentially recursive.
+       val env1 = (p, tann) match {
+         case (Some(f), Some(rt)) =>
+           val tprime = TFunction(params, rt)
+           env + (f -> tprime)
+         case (None, _) => env
+         case _ => err(TUndefined, e1)
+       }
+       // Bind to env2 an environment that extends env1 with bindings for params.
+       // take what we got from env1 and add all the parameter types '++' adds a whole collection of key value pairs
+       val env2 = params.foldLeft(env1) {
+         case (acc, (xi, ti)) => acc + (xi -> ti)
+       }
+       // Match on whether the return type is specified.
+       tann match {
+         case None => {
+          val tau = typeInfer(env2,e1)
+          val tauPrime = TFunction(params, tau)
+          tauPrime
+         }
+         case Some(rt) => {
+           val tau = typeInfer(env2, e1)
            val tauPrime = TFunction(params, tau)
-           tauPrime
-          }
-          case Some(rt) => {
-            val tau = typeInfer(env2, e1)
-            val tauPrime = TFunction(params, tau)
-            if(tauPrime != TFunction(params, rt)) err(tau, e1) else TFunction(params, rt)
-          }
-        }
-      }
-      case _ => throw new UnsupportedOperationException
-    }
+           if(tauPrime != TFunction(params, rt)) err(tau, e1) else TFunction(params, rt)
+         }
+       }
+     }
+     case _ => throw new UnsupportedOperationException
+   }
   }
   
   def inferType(e: Expr): Typ = typeInfer(Map.empty, e)
@@ -285,7 +315,7 @@ object Lab4_pekl2737 {
           case Some(v) => v
         }
 //      case Function(name, params, tann, body) => throw new UnsupportedOperationException
-      
+//      case Call
         
       /* Inductive Cases: Search Rules */
       case Print(e1) => Print(step(e1))
@@ -298,6 +328,22 @@ object Lab4_pekl2737 {
       case Call(e1, args) if(!isValue(e1))=> Call(step(e1), args)
       case Call(e1, args) => throw new UnsupportedOperationException
       case GetField(e1, f) => GetField(step(e1), f)
+      case Obj(f) => {
+        val fList = f.toList
+        def newFunction(arg: (String, Expr)): Option[(String, Expr)] = {
+          arg match {
+            case (s, e1) => if(!isValue(e1)) Some(s, step(e1)) else None
+          }
+        }
+        val newList = mapFirst(newFunction)(fList)
+        val fMap = newList.toMap
+        Obj(fMap)
+      }
+//      case Obj(fields) => {
+//        fields.foreach {
+//        	case(_, vi) => } 
+//        Obj(fields)
+//      }
 //      case Obj(fields) => Obj(step(fields.forall {
 //        case(vi, _) => if(!isValue(vi)){
 //          step(vi)
