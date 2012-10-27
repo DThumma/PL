@@ -48,7 +48,7 @@ object Lab4_pekl2737 {
   }
   
   def testCompress(compress: List[Int] => List[Int]): Boolean = {
-    println(compress(List(1, 2, 2, 3, 3, 3)))
+//    println(compress(List(1, 2, 2, 3, 3, 3)))
     compress(List(1, 2, 2, 3, 3, 3)) == List(1, 2, 3)
     //val stuff = compress(List(1, 2, 2, 3, 3, 3))
   }
@@ -116,8 +116,6 @@ object Lab4_pekl2737 {
   
   def testSum(sum: Tree => Int): Boolean = {
     val l = List(3, 2, 3)
-	println(treeFromList(l))
-    println(sum(treeFromList(l)))
     sum(treeFromList(l)) == 8
   }
   assert(testSum(sum))
@@ -145,6 +143,12 @@ object Lab4_pekl2737 {
    case TObj(fieldtypes) => fieldtypes exists { case (_, t) => hasFunctionTyp(t) }
    case _ => false
  }
+  
+  def hasUndefinedTyp(t: Typ): Boolean = t match {
+    case TUndefined => true
+    case TObj(fieldtypes) => fieldtypes exists { case(_, t) => hasFunctionTyp(t) }
+    case _ => false
+  }
 
  def typeInfer(env: Map[String,Typ], e: Expr): Typ = {
    def typ(e1: Expr) = typeInfer(env, e1)
@@ -162,29 +166,32 @@ object Lab4_pekl2737 {
          case Plus => (typ(e1), typ(e2)) match {
           case (TNumber, TNumber) => TNumber
           case (TString, TString) => TString
-          case (_, tgot: Typ) => err(tgot, e1)
+          case (tgot: Typ, _) if(tgot != TNumber && tgot != TString) => err(tgot, e1)
+          case (_, tgot: Typ) => err(tgot, e2)
          }
-         case Minus | Times | Div => (typ(e1), typ(e2)) match {
+         case Minus | Times | Div  => (typ(e1), typ(e2)) match {
            case (TNumber, TNumber) => TNumber
-           case (_, tgot: Typ) => err(tgot, e1)
+           case (tgot: Typ, _) if(tgot != TNumber) => err(tgot, e1)
+           case (_, tgot: Typ) => err(tgot, e2)
          }
          case Lt | Le | Gt | Ge => (typ(e1), typ(e2)) match {
-           case (TNumber, TNumber) => TBool
-         case (TString, TString) => TBool
-         case (_, tgot: Typ) => err(tgot, e1)
+	       case (TNumber, TNumber) => TBool
+	       case (TString, TString) => TBool
+	       case (tgot: Typ, _) if(tgot != TNumber && tgot != TString) => err(tgot, e1)
+	       case (_, tgot: Typ) => err(tgot, e2)
        }
        case Eq | Ne => typ(e1) match {
          case tgot if (hasFunctionTyp(tgot)) => err(tgot, e1)
          case _ => typ(e2) match {
            case tgot if (hasFunctionTyp(tgot)) => err(tgot, e2)
-           case _ => TBool
+//           case tgot if (hasUndefinedTyp(tgot)) => err(tgot, e2)
+           case _ => if(typ(e1) == typ(e2)) TBool else err(typ(e2), e2)
          }
        }
-       case Seq => typ(e1)
-                   typ(e2)
+       case Seq => typ(e1); typ(e2)
        case And | Or => (typ(e1), typ(e2)) match {
          case (TBool, TBool) => TBool
-         case (_, tgot) => err(tgot, e1)
+         case (_, tgot) => err(tgot, e2)
        }
        case _ => throw new UnsupportedOperationException
      }
@@ -197,7 +204,7 @@ object Lab4_pekl2737 {
        case tgot => err(tgot, e1)
      }
      case If(e1, e2, e3) => (typ(e1),typ(e2),typ(e3)) match {
-       case (TBool, _, tgot) => tgot
+       case (TBool, t1, t2) => if(t1 == t2) t1 else err(t2, e3)
        //case TBool => if (true) typ(e2) else typ(e3) // Replace with above
        case (tgot,_,_) => err(tgot, e1)
      }
@@ -212,6 +219,16 @@ object Lab4_pekl2737 {
          rett
          }         
        case tgot => err(tgot, e1)
+     }
+     case GetField(expr, f) => {
+       val e = typ(expr) 
+       e match {
+         case TObj(fields) => fields.get(f) match {
+           case None => err(e, expr)
+           case Some(v) => v
+         }
+         case _ => err(e, expr)
+       }
      }
      case Function(p, params, tann, e1) => {
        // Bind to env1 an environment that extends env with an appropriate binding if
@@ -284,7 +301,8 @@ object Lab4_pekl2737 {
       case Var(y) => if (x == y) v else e
       case ConstDecl(y, e1, e2) =>
         ConstDecl(y, subst(e1), if (x == y) e2 else subst(e2))
-      case _ => throw new UnsupportedOperationException
+      case GetField(e1, f) => GetField(subst(e1), f)
+      case _ => println("the following fields were not found");println(e); throw new UnsupportedOperationException
     }
   }
   
@@ -343,8 +361,17 @@ object Lab4_pekl2737 {
       /*** Fill-in more cases here. ***/
       case Call(v1 @ Function(_, _, _, _), args) => {
         val args1 = mapFirst{(a:Expr) => if(!isValue(a)) Some(step(a)) else None}(args)
-        Call(v1, args)
+        Call(v1, args1)
       }
+      case Call(e1, args) => Call(step(e1), args)
+//      case Call(v1, args) => v1 match {
+//        case Function(_, _, _, _) => {
+//          val args1 = mapFirst{(a:Expr) => if(!isValue(a)) Some(step(a)) else None}(args)
+//          Call(v1, args1)
+//        }
+//        case GetField(expr, f) => 
+//        case _ => println(v1); throw new UnsupportedOperationException
+//      }
       case GetField(e1, f) => GetField(step(e1), f)
       case Obj(f) => {
         val fList = f.toList
@@ -359,7 +386,7 @@ object Lab4_pekl2737 {
       }
       
       /* Everything else is a stuck error. */
-      case _ => throw new StuckError(e)
+      case _ => println(e);throw new StuckError(e)
     }
   }
 

@@ -1,1 +1,3 @@
-1 + true
+const c = {a: 5, b: function(x: number) { return x / 2 } }; c.b(c.a)
+
+
