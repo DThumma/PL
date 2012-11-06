@@ -1,0 +1,114 @@
+/*
+ * Lab 2: Arithmetic, Booleans, Undefined, Bindings
+ */
+
+const a = 1 + 2
+const b = a > 0 ? 7 : (jsy.print(a), 27 - (a - 7))
+const c = undefined
+b * 4
+{
+  jsy.print(1)
+  jsy.print(2)
+}
+
+/*
+ * Lab 3: Strings, First-Class Functions, Recursive Functions
+ *
+ * The type annotations are given to be compatible with Lab >=4.
+ */
+
+const d = "Hello" + " " + "World!"
+jsy.print(d)
+const incr = function (x: number) { return x + 1; }
+const factorial = function f(x: number): number {
+  return x <= 0 ? 1 : f(x - 1)
+}
+const plus = function (x: number) {
+  return function (y: number) { return x + y }
+}
+// For convenience and like TypeScript, we also support
+// non-recursive functions written with =>.
+const minus = ((x: number) => (y: number) => x - y)
+jsy.print(factorial(4) + incr(10) + plus(4)(5) + minus(10)(8))
+
+/*
+ * Lab 4: Records, Multi-Parameter Functions
+ */
+const pair = { _1: 0, _2: 1 }
+const add = function (x: number, y: number) { return x + y }
+const fst = function (p: { _1: number; _2: number }) { return p._1 }
+jsy.print(pair)
+jsy.print(fst(pair))
+const pairmap =
+  function (f: (x: number) => number, p: {_1: number; _2: number}) {
+    return { _1: f(p._1), _2: f(p._2) }
+  }
+jsy.print(pairmap(function (x: number) { return x + 1 }, pair))
+
+/*
+ * Lab 5: Mutation, Parameter Passing Modes, Casting
+ */
+// Type declarations.
+interface Pair { _1: number; _2: number }
+const p1 = { _1: 0, _2: 1 }
+// Objects are heap allocated and thus are referenced by pointers.  A
+// null pointer is added but also must be explicitly casted.
+const p2 = <Pair>null
+// Casting.  Required between object types and type names.
+const fst = function (p: Pair) { return (<{_1: number; _2: number}>p)._1 }
+const x = fst(<Pair>p1)
+// Up and down casts between object types are permitted, though may result
+// in a run-time error.
+////const triple = <{ _1: number; _2: number; _3: number }>p1
+// Mutable variables are assignable.
+var x = 5
+x = x + 1
+jsy.print(x)
+// And so are fields.
+const o = { f: 24 }
+jsy.print(o)
+o.f = 57
+jsy.print(o)
+// Because objects are not values and instead referenced by address.  We
+// have aliasing.
+const p = o
+p.f = 68
+jsy.print(o)
+// Interface types can be recursive.
+interface Listy { h: number; t: Listy }
+const l0 = <Listy>{ h: 1, t: <Listy>{ h: 2, t: <Listy>null }}
+const hd = function (l: Listy) {
+  return (<{ h: number; t: Listy }>l).h;
+}
+const tl = function (l: Listy) {
+  return (<{ h: number; t: Listy }>l).t;
+}
+const printlist = function f(l: Listy): Undefined {
+  return l === <Listy>null ?
+    undefined :
+    (jsy.print(hd(l)), f(tl(l)))
+}
+printlist(l0)
+// Function parameters can be annotated with const, var, name, or ref to
+// specify immutable (const) or mutable (var) pass-by-value, pass-by-name
+// (name), or pass-by-reference (ref).  These parameter passing modes are
+// an extension beyond of TypeScript/JavaScript.
+var x = 1
+const writearg = function (ref z: number) {
+  z = 42
+  return undefined
+}
+writearg(x)
+jsy.print(x)
+// In JavaScript, there is a distinction between statements and expressions.
+// Statements are layered above expressions.  Statements are sequenced with
+// ; (which can be elided), while expressions are sequenced with , (which
+// cannot be elided).  We keep this distinction in JavaScripty, and
+// matching JavaScript, declarations are at the statement level.  All
+// expressions are statements but not vice versa. As an extension to
+// create particular abstract syntax tres, we allow blocks of statements
+// surrounded by double braces {{ stmts }} to be considered expressions.
+jsy.print({{
+  const x = 1
+  x
+}} + 3) 
