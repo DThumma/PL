@@ -2,7 +2,7 @@ import java.io.File
 object Lab5Main {
   import jsy.util._
   import jsy.lab5._
-  import Lab5_YourIdentiKey.{removeInterfaceDecl,inferType, step} // change this to reference your lab object
+  import Lab5_pekl2737.{removeInterfaceDecl,inferType, step} // change this to reference your lab object
   
   var debug = false /* set to false to disable debugging output */
   var debugSteps = true /* set to false to disable individual evaluation steps printing */

@@ -1,4 +1,4 @@
-object Lab5_YourIdentiKey {
+object Lab5_pekl2737 {
   import jsy.lab5.ast._
   
   /*
@@ -195,6 +195,12 @@ object Lab5_YourIdentiKey {
         
       /* Should not match: non-source expressions or should have been removed */
       case A(_) | Unary(Deref, _) | InterfaceDecl(_, _, _) => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
+    
+      
+      //case Const(x) => throw new StuckError(e)
+      case Decl(_, x, e1, e2) => typ(e1)
+      
+      case _ => throw new UnsupportedOperationException
     }
   }
   
@@ -372,7 +378,15 @@ object Lab5_YourIdentiKey {
         }
         
       /*** Fill-in more cases here. ***/
-        
+      
+      // x = e1; e2
+      case Decl(_, x, e1, e2) => {
+        val a = A.fresh()
+//        print("-----------------------------------")
+//        print((m + (a -> e1), e2))
+//        print("-----------------------------------")
+        (m + (a -> e1), e2)
+      }
       /* Inductive Cases: Search Rules */
       case Print(e1) =>
         val (mp,e1p) = step(m,e1)
@@ -395,6 +409,7 @@ object Lab5_YourIdentiKey {
           (mp, Obj(fields + (fi -> eip)))
         case None => throw new StuckError(e)
       }
+      case Var(x) => (m, substitute(e, N(1), x))
         
       /*** Fill-in more cases here. ***/
       
