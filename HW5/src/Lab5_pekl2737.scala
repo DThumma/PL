@@ -50,7 +50,7 @@ object Lab5_pekl2737 {
       val r =
         e match {
           case Unary(Cast(t), e1) => throw new UnsupportedOperationException
-          case Function(p, params, retty, e1) => throw new UnsupportedOperationException
+          case Function(p, params, retty, e1) => Function(p, params, retty, rm(e1))
           case InterfaceDecl(tvar, t, e1) => throw new UnsupportedOperationException
           /* Pass through cases. */
           case Var(_) | N(_) | B(_) | Undefined | S(_) | Null | A(_) => e
@@ -184,7 +184,17 @@ object Lab5_pekl2737 {
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with the parameters.
-        val env2 = throw new UnsupportedOperationException
+        val env2 = params.foldLeft(env1){(newEnv, a) => a match {
+          case (f, (mode, typ)) => 
+            val mut = mode match {
+              case PConst => Const
+              case PName => Const
+              case PVar => Var
+              case PRef => Var
+            }
+            newEnv + (f -> (mut, typ))
+          }                      
+        }
         // Infer the type of the function body
         val t1 = typeInfer(env2, e1)
         tann foreach { rt => if (rt != t1) err(t1, e1) };
@@ -199,6 +209,17 @@ object Lab5_pekl2737 {
       
       //case Const(x) => throw new StuckError(e)
       case Decl(_, x, e1, e2) => typ(e1)
+      case Call(e1, args) => typ(e1) match {
+        case TFunction(params, retty) => {
+          if(args.size != params.size) err(TUndefined, e1)
+          val z = params zip args
+//          print(z + "\n")
+//          print("###########################")
+          z.foreach{case ((name, (mode, tann)), argE) =>  if(tann != typ(argE)) err(TUndefined, e1) }
+          retty
+        }
+        case _ => throw new Exception("implement the rest of call")
+      }
       
       case _ => throw new UnsupportedOperationException
     }
@@ -324,10 +345,14 @@ object Lab5_pekl2737 {
 
     /* Get the memory and argument expression based on the parameter mode. Expr arg should "applyable". */
     def argByMode(mode: PMode, m: Mem, arg: Expr): (Mem, Expr) = mode match {
-      case PConst if (isValue(arg)) => throw new UnsupportedOperationException
-      case PName => throw new UnsupportedOperationException
-      case PVar if (isValue(arg)) => throw new UnsupportedOperationException
-      case PRef if (isLValue(arg)) => throw new UnsupportedOperationException
+      case PConst if (isValue(arg)) => (m, arg)
+      case PName => (m, arg)
+      case PVar if (isValue(arg)) => {
+        val a = A.fresh()
+        val (m2, e2) = (m + (a -> arg), a)
+        (m2, Unary(Deref, a))
+      }
+      case PRef if (isLValue(arg)) => (m, arg)
       case _ => throw new IllegalArgumentException("Gremlins: Should have checked argApplyable before calling argByMode")
     }
   
@@ -382,8 +407,11 @@ object Lab5_pekl2737 {
             if (zippedpa.forall { case ((_, (modei, _)), argi) => argApplyable(modei, argi) }) {
               /* DoCall cases */
               val (mp,e1p) = zippedpa.foldRight((m, e1)){
-                case (((xi, (modei, _)), argi), (accm, acce)) =>
-                  throw new UnsupportedOperationException
+                case (((xi, (modei, _)), argi), (accm, acce)) =>{
+                  val (mm, ei) = argByMode(modei, accm, argi)
+                  (mm, substitute(acce, e1, xi))
+                }
+//                  (accm, e)
               }
               p match {
                 case None => (mp, e1p)
@@ -404,9 +432,14 @@ object Lab5_pekl2737 {
       /*** Fill-in more cases here. ***/
       
       // x = e1; e2
-      case Decl(kind, x, e1, e2) => {
-        val a = A.fresh()
-        (m + (a -> e1), substitute(e2, Unary(Deref,a), x))
+      case Decl(kind, x, e1, e2) => kind match {
+        case Var => {
+		  val a = A.fresh()
+		  (m + (a -> e1), substitute(e2, Unary(Deref,a), x))
+        }
+        case Const => {
+          (m, substitute(e2, e1, x))
+        }
       }
       case Unary(Deref, a @ A(i)) => (m, m(a))
 

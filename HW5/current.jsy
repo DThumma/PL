@@ -1,4 +1,1 @@
-var x = 1
-var y = 2
-var z = x+y
-jsy.print(z)
+function (x: number, y: string) { return 1 }(1, 'asdf')
