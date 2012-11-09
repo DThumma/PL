@@ -50,8 +50,19 @@ object Lab5_pekl2737 {
       val r =
         e match {
           case Unary(Cast(t), e1) => throw new UnsupportedOperationException
-          case Function(p, params, retty, e1) => Function(p, params, retty, rm(e1))
-          case InterfaceDecl(tvar, t, e1) => throw new UnsupportedOperationException
+          
+          case Function(p, params, retty, e1) =>
+            val (name, values) = params.unzip
+            val (mode, type1) = values.unzip
+            val type2 = type1.foldRight(List[Typ]())((v, acc) => tyrm(v) :: acc)
+            val values2 = mode zip type2
+            val params2 = name zip values2
+            val retty2 = retty  match {
+              case Some(t1) => Some(tyrm(t1))
+              case None => retty
+            }
+            Function(p, params2, retty2, rm(e1))
+          case InterfaceDecl(tvar, t, e1) => InterfaceDecl(tvar, tyrm(t), rm(e1))
           /* Pass through cases. */
           case Var(_) | N(_) | B(_) | Undefined | S(_) | Null | A(_) => e
           case Print(e1) => Print(rm(e1))
@@ -203,6 +214,10 @@ object Lab5_pekl2737 {
       
       /*** Fill-in more cases here. ***/
         
+      case Null => TNull
+      case null => TNull
+ 
+     
       /* Should not match: non-source expressions or should have been removed */
       case A(_) | Unary(Deref, _) | InterfaceDecl(_, _, _) => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
     
@@ -411,7 +426,6 @@ object Lab5_pekl2737 {
                   val (mm, ei) = argByMode(modei, accm, argi)
                   (mm, substitute(acce, e1, xi))
                 }
-//                  (accm, e)
               }
               p match {
                 case None => (mp, e1p)

@@ -1,0 +1,12 @@
+/* Test 1 */
+var x1 = 1
+jsy.print(x1)
+
+/* Test 2 */
+var x2 = 1
+var y2 = 2
+var z2 = x2 + y2
+jsy.print(z2)
+
+/* Test 3 */
+function (x3: number, y3: string) { return 1 }(1, 'asdf')
