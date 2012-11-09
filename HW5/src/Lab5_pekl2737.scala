@@ -240,8 +240,11 @@ object Lab5_pekl2737 {
     def rename(env: Map[String,String], e: Expr): Expr = {
       def ren(e: Expr): Expr = rename(env, e)
       e match {
-        case Var(y) => throw new UnsupportedOperationException
-        case Decl(mut, y, e1, e2) => throw new UnsupportedOperationException
+        case Var(y) => {
+          val yrenamed = renameVar(y)
+          Var(yrenamed)
+        }
+        case Decl(mut, y, e1, e2) => Decl(mut, renameVar(y), ren(e1), ren(e2))
         case Function(p, params, retty, e1) =>
           val (env1, prenamed) = p match {
             case None => (env, None)
@@ -331,6 +334,27 @@ object Lab5_pekl2737 {
     /*** Body ***/
     
     e match {
+      
+      /*
+       * 
+       * Objects are pointers
+       * Assign field changes the component of a record of the object in the memory location of the field
+       * lv = location value
+       * case for if there is an lvalue (isLValue)
+       * isLExpr used in type checker
+       * ep = substitute(acce, v, xi) <--- use in argByMode
+       * 
+       * 
+       * rm(e) is used to remove types from declarations of variables so that we can deal with typecasting
+       * 
+       * Mystery ---
+       * Type A1 = [0 TO 10]
+       * VAR x: A1
+       * VAR y: A1
+       * x := 1
+       * 
+       */
+      
       /* Base Cases: Do Rules */
       case Print(v1) if isValue(v1) => println(pretty(v1)); (m, Undefined)
       case Unary(Neg, N(n1)) => (m, N(- n1))
@@ -380,13 +404,13 @@ object Lab5_pekl2737 {
       /*** Fill-in more cases here. ***/
       
       // x = e1; e2
-      case Decl(_, x, e1, e2) => {
+      case Decl(kind, x, e1, e2) => {
         val a = A.fresh()
-//        print("-----------------------------------")
-//        print((m + (a -> e1), e2))
-//        print("-----------------------------------")
-        (m + (a -> e1), e2)
+        (m + (a -> e1), substitute(e2, Unary(Deref,a), x))
       }
+      case Unary(Deref, a @ A(i)) => (m, m(a))
+
+      
       /* Inductive Cases: Search Rules */
       case Print(e1) =>
         val (mp,e1p) = step(m,e1)
@@ -409,7 +433,6 @@ object Lab5_pekl2737 {
           (mp, Obj(fields + (fi -> eip)))
         case None => throw new StuckError(e)
       }
-      case Var(x) => (m, substitute(e, N(1), x))
         
       /*** Fill-in more cases here. ***/
       
