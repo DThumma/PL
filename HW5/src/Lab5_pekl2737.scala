@@ -49,20 +49,19 @@ object Lab5_pekl2737 {
       def rm(e: Expr): Expr = loop(env, e)
       val r =
         e match {
-          case Unary(Cast(t), e1) => throw new UnsupportedOperationException
-          
+          case Unary(Cast(t), e1) => Unary(Cast(tyrm(t)), rm(e1));
           case Function(p, params, retty, e1) =>
-            val (name, values) = params.unzip
-            val (mode, type1) = values.unzip
+            val (name, values) = params.unzip;
+            val (mode, type1) = values.unzip;
             val type2 = type1.foldRight(List[Typ]())((v, acc) => tyrm(v) :: acc)
             val values2 = mode zip type2
-            val params2 = name zip values2
-            val retty2 = retty  match {
-              case Some(t1) => Some(tyrm(t1))
-              case None => retty
+            val params2 = name zip values2;
+            val retty2 = retty match{
+              case Some(t1) => Some(tyrm(t1));
+              case None => retty;
             }
-            Function(p, params2, retty2, rm(e1))
-          case InterfaceDecl(tvar, t, e1) => InterfaceDecl(tvar, tyrm(t), rm(e1))
+            Function(p, params2, retty2, rm(e1));
+          case InterfaceDecl(tvar, t, e1) => loop((env + (tvar -> TInterface(tvar,t))), e1);
           /* Pass through cases. */
           case Var(_) | N(_) | B(_) | Undefined | S(_) | Null | A(_) => e
           case Print(e1) => Print(rm(e1))
@@ -89,12 +88,22 @@ object Lab5_pekl2737 {
   def castOk(t1: Typ, t2: Typ): Boolean = (t1, t2) match {
     case (TNull, TObj(_)) => true
     case (_, _) if (t1 == t2) => true
-    case (TObj(fields1), TObj(fields2)) => throw new UnsupportedOperationException
+    case (TObj(fields1), TObj(fields2)) =>
+      val acc1 = fields2 forall {case (fieldName,ti) => 
+              fields1.get(fieldName) match{
+              case Some(t2) => if(ti == t2) true else false
+              case None => false
+      }}
+      val acc2 = fields1 forall {case (fieldName,ti) => 
+              fields2.get(fieldName) match{
+              case Some(t2) => if(ti == t2) true else false
+              case None => acc1
+      }}
+      acc1 || acc2
     case (_, TInterface(tvar, t2p)) => castOk(t1, typSubstitute(t2p, t2, tvar))
     case (TInterface(tvar, t1p), _) => castOk(typSubstitute(t1p, t1, tvar), t2)
     case _ => false
   }
-  
   /*** Type Inference ***/
   
   def typeInfer(env: Map[String,(Mutability,Typ)], e: Expr): Typ = {
@@ -117,6 +126,7 @@ object Lab5_pekl2737 {
       case B(_) => TBool
       case Undefined => TUndefined
       case S(_) => TString
+      case Null => TNull;
       case Var(x) =>
         val (_, t) = env(x)
         t
@@ -178,7 +188,8 @@ object Lab5_pekl2737 {
           if (t2 == t3) t2 else err(t3, e3)
         case tgot => err(tgot, e1)
       }
-      case Obj(fields) => TObj(fields map { case (f,t) => (f, typ(t)) })
+      case Obj(fields) => TObj(fields map { case
+        (f,t) => (f, typ(t)) })
       case GetField(e1, f) => typ(e1) match {
         case TObj(tfields) if (tfields.contains(f)) => tfields(f)
         case tgot => err(tgot, e1)
@@ -195,17 +206,7 @@ object Lab5_pekl2737 {
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with the parameters.
-        val env2 = params.foldLeft(env1){(newEnv, a) => a match {
-          case (f, (mode, typ)) => 
-            val mut = mode match {
-              case PConst => Const
-              case PName => Const
-              case PVar => Var
-              case PRef => Var
-            }
-            newEnv + (f -> (mut, typ))
-          }                      
-        }
+        val env2 = params.foldLeft(env1){case (acc, (s1, (mod, t))) => (acc + (s1 -> ((mutOfMode(mod),t))))}
         // Infer the type of the function body
         val t1 = typeInfer(env2, e1)
         tann foreach { rt => if (rt != t1) err(t1, e1) };
@@ -213,30 +214,34 @@ object Lab5_pekl2737 {
       }
       
       /*** Fill-in more cases here. ***/
+      case Decl(mut, x, e1, e2) => typeInfer(env + (x -> (mut, typ(e1))), e2)
+      case Call(e1, args) => typ(e1) match{
+        case TFunction(params, rett) => rett;
+        case _ => throw new IllegalArgumentException("Gremlins: Should have checked argApplyable before calling argByMode")
+      }
+      case Assign(e1, e2) => e1 match{
+        case Var(x) => 
+          val(_, t) = env(x);
+          if(t == typ(e2)) t else err(typ(e2), e2);
+        case GetField(e1, f) => 
+            typ(e1) match{
+            case tgot @ TObj(fieldtypes) => fieldtypes.get(f) match{
+                case None => err(tgot, e1);
+                case Some(t) if(t == typ(e2)) => t;
+                case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
+        }
+            case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
+            }
+        case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
+      }
+      case Unary(Cast(t), e1) => (castOk(typ(e1), t)) match{
+        case true => t;
+        case false => err(typ(e1), e1);
+        }
         
-      case Null => TNull
-      case null => TNull
- 
-     
+        
       /* Should not match: non-source expressions or should have been removed */
       case A(_) | Unary(Deref, _) | InterfaceDecl(_, _, _) => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
-    
-      
-      //case Const(x) => throw new StuckError(e)
-      case Decl(_, x, e1, e2) => typ(e1)
-      case Call(e1, args) => typ(e1) match {
-        case TFunction(params, retty) => {
-          if(args.size != params.size) err(TUndefined, e1)
-          val z = params zip args
-//          print(z + "\n")
-//          print("###########################")
-          z.foreach{case ((name, (mode, tann)), argE) =>  if(tann != typ(argE)) err(TUndefined, e1) }
-          retty
-        }
-        case _ => throw new Exception("implement the rest of call")
-      }
-      
-      case _ => throw new UnsupportedOperationException
     }
   }
   
@@ -276,10 +281,7 @@ object Lab5_pekl2737 {
     def rename(env: Map[String,String], e: Expr): Expr = {
       def ren(e: Expr): Expr = rename(env, e)
       e match {
-        case Var(y) => {
-          val yrenamed = renameVar(y)
-          Var(yrenamed)
-        }
+        case Var(y) => Var(renameVar(y));
         case Decl(mut, y, e1, e2) => Decl(mut, renameVar(y), ren(e1), ren(e2))
         case Function(p, params, retty, e1) =>
           val (env1, prenamed) = p match {
@@ -318,6 +320,7 @@ object Lab5_pekl2737 {
   def substitute(e: Expr, esub: Expr, x: String): Expr = {
     def subst(e: Expr): Expr = substitute(e, esub, x)
     avoidCapture(esub, e) match {
+    //e match{
       case N(_) | B(_) | Undefined | S(_) | Null | A(_) => e
       case Print(e1) => Print(subst(e1))
       case Unary(uop, e1) => Unary(uop, subst(e1))
@@ -360,41 +363,19 @@ object Lab5_pekl2737 {
 
     /* Get the memory and argument expression based on the parameter mode. Expr arg should "applyable". */
     def argByMode(mode: PMode, m: Mem, arg: Expr): (Mem, Expr) = mode match {
-      case PConst if (isValue(arg)) => (m, arg)
-      case PName => (m, arg)
-      case PVar if (isValue(arg)) => {
-        val a = A.fresh()
-        val (m2, e2) = (m + (a -> arg), a)
-        (m2, Unary(Deref, a))
-      }
-      case PRef if (isLValue(arg)) => (m, arg)
+      case PConst if (isValue(arg)) => (m, arg);
+      case PName => (m, arg);
+      case PVar if (isValue(arg)) => 
+        val a = A.fresh();
+        val (m2, e2) = (m + (a -> arg), a);
+        (m2, Unary(Deref, a));
+      case PRef if (isLValue(arg)) => (m, arg);
       case _ => throw new IllegalArgumentException("Gremlins: Should have checked argApplyable before calling argByMode")
     }
   
     /*** Body ***/
     
     e match {
-      
-      /*
-       * 
-       * Objects are pointers
-       * Assign field changes the component of a record of the object in the memory location of the field
-       * lv = location value
-       * case for if there is an lvalue (isLValue)
-       * isLExpr used in type checker
-       * ep = substitute(acce, v, xi) <--- use in argByMode
-       * 
-       * 
-       * rm(e) is used to remove types from declarations of variables so that we can deal with typecasting
-       * 
-       * Mystery ---
-       * Type A1 = [0 TO 10]
-       * VAR x: A1
-       * VAR y: A1
-       * x := 1
-       * 
-       */
-      
       /* Base Cases: Do Rules */
       case Print(v1) if isValue(v1) => println(pretty(v1)); (m, Undefined)
       case Unary(Neg, N(n1)) => (m, N(- n1))
@@ -422,10 +403,9 @@ object Lab5_pekl2737 {
             if (zippedpa.forall { case ((_, (modei, _)), argi) => argApplyable(modei, argi) }) {
               /* DoCall cases */
               val (mp,e1p) = zippedpa.foldRight((m, e1)){
-                case (((xi, (modei, _)), argi), (accm, acce)) =>{
-                  val (mm, ei) = argByMode(modei, accm, argi)
-                  (mm, substitute(acce, e1, xi))
-                }
+                case (((xi, (modei, _)), argi), (accm, acce)) =>
+                  val (mm, ei) = argByMode(modei, accm, argi);
+                  (mm, substitute(acce, ei, xi));
               }
               p match {
                 case None => (mp, e1p)
@@ -436,27 +416,69 @@ object Lab5_pekl2737 {
               /* SearchCall2 case */
               val (mp, zippedpap) =
                 mapFirstWith[((String,(PMode, Typ)),Expr), Mem](m, { case (accm, (pi @ (_, (modei, _)), argi)) =>
-                  throw new UnsupportedOperationException
+                  //check applyable of argi 
+                  if(argApplyable(modei, argi)) None else{
+                    val (mp2, argip) = step(accm, argi);
+                    Some((mp2, (pi, argip)));
+                  }
                 })(zippedpa)
               (mp, Call(v1, zippedpap.unzip._2))
             }
           case _ => throw new StuckError(e)
         }
         
-      /*** Fill-in more cases here. ***/
-      
-      // x = e1; e2
-      case Decl(kind, x, e1, e2) => kind match {
-        case Var => {
-		  val a = A.fresh()
-		  (m + (a -> e1), substitute(e2, Unary(Deref,a), x))
+      /*** Fill-in more DO cases here. ***/
+      case Decl(Var, y, e1, e2) if(isValue(e1)) =>
+        val a = A.fresh();
+        val (mp, ep) = (m + (a -> e1), a);
+        (mp, substitute(e2, Unary(Deref, a), y)); 
+      case Decl(Const, y, e1, e2) if(isValue(e1)) => (m, substitute(e2, e1, y));
+      case Assign(GetField(Null, _), _) => throw new NullDereferenceError(e)
+      case Assign(e1, e2) if(isLValue(e1) && isValue(e2)) =>
+        e1 match{
+        case Unary(Deref, a @ A(_)) => m.get(a) match{
+          case None => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
+          case Some(x) => 
+            val (mp , ep) = (m + (a -> e2), a);
+            (mp, e2);
         }
-        case Const => {
-          (m, substitute(e2, e1, x))
+        case GetField(Null, _) => throw new NullDereferenceError(e)
+        case GetField(a @A(_), f) => m.get(a) match{
+          case None => throw new StuckError(e);
+          case Some(Obj(fields)) => fields.get(f) match{
+            case None => throw new StuckError(e);
+            case Some(v) =>
+              val g = (fields + (f -> v))
+              val (mp, ep) = (m + (a -> Obj(g)), a)
+              (mp, e2);
+            }
+          case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
         }
+        case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
+        }
+      case GetField(a @ A(_), f) => m.get(a) match{
+        case Some(Null) => throw new NullDereferenceError(e)
+        case None => throw new StuckError(e);
+        case Some(Obj(fields)) => fields.get(f) match{
+          case None => throw new StuckError(e);
+          case Some(v) => (m, v);
+        }
+        case _ => throw new StuckError(e);
+      }      
+      case Unary(Deref, a @ A(_)) => (m, m(a));
+      case Unary(Cast(TObj(t)), a @ A(_)) => m(a) match{
+        case Obj(fields) =>
+        val typField = fields.mapValues{case f => typeInfer(Map.empty, f)}
+        val acc1 = typField forall {case (fieldName,ti) => 
+              t.get(fieldName) match{
+              case Some(t2) => if(ti == t2) true else false
+              case None => false
+      }}
+        if(acc1) (m, a) else throw new DynamicTypeError(e)
+        case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
       }
-      case Unary(Deref, a @ A(i)) => (m, m(a))
-
+      case Unary(Cast(t), e1) => if(e1 == Null) (m, Null) else (m, e1)
+      
       
       /* Inductive Cases: Search Rules */
       case Print(e1) =>
@@ -482,6 +504,21 @@ object Lab5_pekl2737 {
       }
         
       /*** Fill-in more cases here. ***/
+      case Decl(mut, y, e1, e2) => 
+        val (mp, ep1) = step(m, e1);
+        (mp, Decl(mut, y, ep1, e2));
+      case Assign(e1, e2) if(!isLValue(e1)) => 
+        val (mp, ep1) = step(m, e1);
+        (mp, Assign(ep1, e2));
+      case Assign(e1, e2) => 
+        val (mp, ep2) = step(m, e2);
+        (mp, Assign(e1, ep2));
+      case GetField(e1, f) => 
+        val (mp, ep1) = step(m, e1);
+        (mp, GetField(ep1, f));
+      case Call(e1, e2) => 
+        val (mp, ep1) = step(m, e1);
+        (m, Call(ep1, e2));
       
       /* Everything else is a stuck error. */
       case _ => throw new StuckError(e)

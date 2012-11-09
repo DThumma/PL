@@ -1,2 +1,12 @@
-const incr = function (x: number) { return x + 1; }
-jsy.print(incr(1))
+//const id = function (x: number) { return x; }
+//id(1)
+
+//interface myObj {n:number; b:bool}
+//var a = {n:5, b: null}
+//jsy.print(a.n)
+//a.n = 1
+
+var x = 2
+x = x+2
+const y = x + 2
+y = x + 2

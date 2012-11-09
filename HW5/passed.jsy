@@ -10,3 +10,7 @@ jsy.print(z2)
 
 /* Test 3 */
 function (x3: number, y3: string) { return 1 }(1, 'asdf')
+
+/* Test 4 */
+interface myObj4 {n:number; b:bool}
+var x4 = {n:5, b: null}
