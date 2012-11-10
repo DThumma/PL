@@ -219,21 +219,21 @@ object Lab5_pekl2737 {
         case TFunction(params, rett) => rett;
         case _ => throw new IllegalArgumentException("Gremlins: Should have checked argApplyable before calling argByMode")
       }
-      case Assign(e1, e2) => e1 match{
-        case Var(x) => 
-          val(_, t) = env(x);
-          if(t == typ(e2)) t else err(typ(e2), e2);
-        case GetField(e1, f) => 
-            typ(e1) match{
-            case tgot @ TObj(fieldtypes) => fieldtypes.get(f) match{
-                case None => err(tgot, e1);
-                case Some(t) if(t == typ(e2)) => t;
-                case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
+      case Assign(e1, e2) => 
+       val t2 = typ(e2)       
+       e1 match {
+         case Var(x) =>
+           val op1 = env.get(x)
+           op1 match {
+             case Some((Var, t1)) if (t1 == t2) => t1
+             case _ => err(t2, e2)
+           } 
+         case GetField(Var(x),f) =>
+           val t1 = typ(GetField(Var(x),f))
+           if (t1 == t2) t1
+           else err(t2, e2)
+         case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
         }
-            case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
-            }
-        case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
-      }
       case Unary(Cast(t), e1) => (castOk(typ(e1), t)) match{
         case true => t;
         case false => err(typ(e1), e1);
@@ -377,6 +377,7 @@ object Lab5_pekl2737 {
     
     e match {
       /* Base Cases: Do Rules */
+      case Print(a @ A(_)) => println(pretty(m(a))); (m, Undefined) 
       case Print(v1) if isValue(v1) => println(pretty(v1)); (m, Undefined)
       case Unary(Neg, N(n1)) => (m, N(- n1))
       case Unary(Not, B(b1)) => (m, B(! b1))
@@ -418,6 +419,9 @@ object Lab5_pekl2737 {
                 mapFirstWith[((String,(PMode, Typ)),Expr), Mem](m, { case (accm, (pi @ (_, (modei, _)), argi)) =>
                   //check applyable of argi 
                   if(argApplyable(modei, argi)) None else{
+                    if(isValue(argi)){
+                      throw new StaticTypeError(typeInfer(Map.empty, argi), v1, e)
+                    }
                     val (mp2, argip) = step(accm, argi);
                     Some((mp2, (pi, argip)));
                   }
@@ -448,7 +452,7 @@ object Lab5_pekl2737 {
           case Some(Obj(fields)) => fields.get(f) match{
             case None => throw new StuckError(e);
             case Some(v) =>
-              val g = (fields + (f -> v))
+              val g = (fields + (f -> e2))
               val (mp, ep) = (m + (a -> Obj(g)), a)
               (mp, e2);
             }
@@ -466,17 +470,18 @@ object Lab5_pekl2737 {
         case _ => throw new StuckError(e);
       }      
       case Unary(Deref, a @ A(_)) => (m, m(a));
-      case Unary(Cast(TObj(t)), a @ A(_)) => m(a) match{
+       case Unary(Cast(TObj(t)), a @ A(_)) => m(a) match{
         case Obj(fields) =>
         val typField = fields.mapValues{case f => typeInfer(Map.empty, f)}
-        val acc1 = typField forall {case (fieldName,ti) => 
-              t.get(fieldName) match{
+        val acc1 = t forall {case (fieldName,ti) => 
+              typField.get(fieldName) match{
               case Some(t2) => if(ti == t2) true else false
               case None => false
       }}
         if(acc1) (m, a) else throw new DynamicTypeError(e)
         case _ => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e));
       }
+
       case Unary(Cast(t), e1) => if(e1 == Null) (m, Null) else (m, e1)
       
       
@@ -514,6 +519,7 @@ object Lab5_pekl2737 {
         val (mp, ep2) = step(m, e2);
         (mp, Assign(e1, ep2));
       case GetField(e1, f) => 
+        if(e1 == Null) throw new NullDereferenceError(e1) //Test
         val (mp, ep1) = step(m, e1);
         (mp, GetField(ep1, f));
       case Call(e1, e2) => 

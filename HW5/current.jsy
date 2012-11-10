@@ -6,7 +6,22 @@
 //jsy.print(a.n)
 //a.n = 1
 
-var x = 2
-x = x+2
-const y = x + 2
-y = x + 2
+//var b = <{n:number}> null
+//jsy.print(b.n)
+
+//const obj = { value: 15 }
+//jsy.print(obj)
+//obj.value = 22
+//jsy.print(obj)
+
+const f = function (ref x: number): number { return x }
+f(2)
+ 
+
+//const obj = {value: 15}
+//jsy.print(obj)
+//const obj2 = obj
+//jsy.print(obj2)
+//obj.value=295
+//jsy.print(obj)
+//jsy.print(obj2)
